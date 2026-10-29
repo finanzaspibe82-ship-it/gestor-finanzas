@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitud de Autorización a Pago - PIBE LOGISTIC</title>
+    <!-- FAVICON (ÍCONO DE PESTAÑA) -->
+    <link rel="icon" type="image/png" href="image/FINANZAS.jpg">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+        body {
+            font-family: 'Courier Prime', Courier, monospace, Arial, sans-serif;
+            background-color: #e2e8f0;
+        }
+        .excel-table {
+            border-collapse: collapse;
+            width: 100%;
+            background: white;
+        }
+        .excel-table th, .excel-table td {
+            border: 1px solid #000;
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+        .excel-header {
+            background-color: #1e5631;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        .input-excel {
+            width: 100%;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-family: inherit;
+            font-size: 11px;
+        }
+        .input-excel:focus {
+            background-color: #eff6ff;
+        }
+        select.input-excel {
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        .excel-tabs-bar {
+            background-color: #12161f;
+            display: inline-flex;
+            border-radius: 4px 4px 0 0;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+        .excel-tab {
+            background-color: #12161f;
+            color: #fff;
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            border-right: 1px solid #374151;
+            display: flex;
+            align-items: center;
+            letter-spacing: 0.5px;
+        }
+        .excel-tab:hover {
+            background-color: #1f2937;
+        }
+        .excel-tab.active {
+            background: linear-gradient(to bottom, #dcfce7, #bbf7d0);
+            color: #14532d;
+            border-bottom: 3px solid #15803d;
+        }
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+            .print-container { box-shadow: none !important; margin: 0 !important; width: 100% !important; border: none !important; }
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <!-- MODAL / PANTALLA DE ACCESO CON CONTRASEÑA -->
+    <div id="modal-login" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center no-print">
+        <div class="bg-white p-8 rounded-lg shadow-2xl max-w-md w-full border-2 border-emerald-800">
+            <div class="flex flex-col items-center mb-6">
+                <!-- LOGO EN ACCESO SEGURO -->
+                <img src="image/LOGO.jpg" alt="Logo PIBE LOGISTIC" class="w-16 h-16 object-contain mb-2">
+                <h2 class="text-xl font-bold text-gray-800">ACCESO SEGURO</h2>
+                <p class="text-xs text-gray-500 text-center mt-1">Selecciona tu usuario e ingresa tu contraseña</p>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-gray-700 mb-1">Usuario y Área:</label>
+                <select id="login-usuario-select" class="w-full border-2 border-gray-300 p-2 text-xs uppercase font-bold rounded focus:border-emerald-600 outline-none">
+                    <option value="">-- SELECCIONE USUARIO --</option>
+                </select>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-gray-700 mb-1">Contraseña:</label>
+                <input type="password" id="login-password" class="w-full border-2 border-gray-300 p-2 text-xs rounded focus:border-emerald-600 outline-none" placeholder="Ingresa tu contraseña">
+            </div>
+
+            <button onclick="iniciarSesion()" class="w-full py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded shadow transition-all">
+                INGRESAR AL SISTEMA
+            </button>
+        </div>
+    </div>
+
+    <!-- BARRA DE PESTAÑAS Y USUARIO ACTIVO -->
+    <div class="max-w-6xl mx-auto mb-3 flex justify-between items-end no-print">
+        <div class="excel-tabs-bar shadow-md">
+            <div onclick="cambiarVista('generador')" id="tab-generador" class="excel-tab active">GENERADOR SOLICITUDES</div>
+            <div onclick="cambiarVista('cuentas')" id="tab-cuentas" class="excel-tab">CUENTAS</div>
+            <div onclick="cambiarVista('control')" id="tab-control" class="excel-tab">CONTROL DE SOLICITUDES</div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span id="lbl-usuario-activo" class="bg-blue-100 text-blue-900 text-xs font-bold px-3 py-1 rounded border border-blue-400">Usuario: --</span>
+            <button onclick="cerrarSesion()" class="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold rounded shadow">Cambiar</button>
+            <span id="lbl-sociedad-activa" class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded border border-green-400">Sociedad: PIBE LOGISTIC</span>
+        </div>
+    </div>
+
+    <!-- VISTA 1: GENERADOR DE SOLICITUDES -->
+    <div id="vista-generador" class="max-w-5xl mx-auto bg-white p-6 shadow-2xl print-container border-2 border-black">
+        
+        <!-- ENCABEZADO OFICIAL CON IMAGEN DE LOGO -->
+        <div class="grid grid-cols-12 border-2 border-black mb-3 items-center">
+            <div class="col-span-3 p-2 border-r-2 border-black flex flex-col items-center justify-center bg-white">
+                <img src="image/LOGO.jpg" alt="Logo PIBE LOGISTIC" class="w-20 h-16 object-contain">
+            </div>
+            <div class="col-span-9 text-center p-2">
+                <div class="font-extrabold text-base italic tracking-wide text-black uppercase">
+                    PIBE LOGISTIC S DE RL DE CV
+                </div>
+                <div class="text-xs font-bold italic mt-1 text-black">
+                    "SOLICITUD DE AUTORIZACION A PAGO"
+                </div>
+                <div class="text-[11px] font-bold italic text-black">
+                    DIRECCIÓN DE ADMINISTRACION Y FINANZAS
+                </div>
+            </div>
+        </div>
+
+        <!-- ACCIONES -->
+        <div class="flex justify-end gap-2 mb-3 no-print">
+            <button onclick="limpiarFormulario()" class="px-4 py-2 bg-yellow-500 text-white font-bold text-xs rounded hover:bg-yellow-600 shadow">NUEVA SOLICITUD</button>
+            <button onclick="SubImprimirSolicitudYGenerarControl()" class="px-4 py-2 bg-orange-500 text-white font-bold text-xs rounded hover:bg-orange-600 shadow">IMPRIMIR / GENERAR SOLICITUD</button>
+        </div>
+
+        <!-- DATOS SUPERIORES -->
+        <div class="grid grid-cols-2 gap-3 mb-3">
+            <!-- Tabla Izquierda: Solicitante y Área -->
+            <table class="excel-table h-full">
+                <tr>
+                    <td class="excel-header w-2/5">FECHA DE SOLICITUD</td>
+                    <td class="w-3/5 text-center font-bold bg-gray-50"><input type="text" id="fecha-sol" class="input-excel font-bold text-center bg-gray-50" readonly></td>
+                </tr>
+                <tr>
+                    <td class="excel-header">SOLICITANTE</td>
+                    <td><input type="text" id="nombre-solic" class="input-excel uppercase font-bold bg-gray-50" readonly></td>
+                </tr>
+                <tr>
+                    <td class="excel-header">ÁREA</td>
+                    <td><input type="text" id="area-solic" class="input-excel uppercase font-bold bg-gray-50" readonly></td>
+                </tr>
+            </table>
+
+            <!-- Tabla Derecha: No. de Control y Forma de Pago dinámica -->
+            <table class="excel-table h-full">
+                <tr>
+                    <td class="excel-header w-2/5">NO. DE CONTROL DIRECCION</td>
+                    <td class="w-3/5 text-center font-bold"><input type="text" id="no-control" class="input-excel font-bold text-center bg-gray-50" readonly></td>
+                </tr>
+                <tr>
+                    <td class="excel-header">FORMA DE PAGO</td>
+                    <td>
+                        <select id="select-forma-pago" class="input-excel uppercase font-bold text-blue-900 cursor-pointer" onchange="actualizarFormaPagoDinamica()">
+                            <option value="TRANSFERENCIA ELECTRONICA DE FONDOS">TRANSFERENCIA ELECTRONICA DE FONDOS</option>
+                            <option value="EFECTIVO">EFECTIVO</option>
+                            <option value="TARJETA DE DEBITO CORPORATIVA">TARJETA DE DEBITO CORPORATIVA</option>
+                            <option value="CHEQUE">CHEQUE</option>
+                            <option value="REFERENCIADO">REFERENCIADO</option>
+                            <option value="CARGO AUTOMATICO">CARGO AUTOMATICO</option>
+                            <option value="CARGA DE TAG">CARGA DE TAG</option>
+                            <option value="CARGA DE TARJETA DE COMBUSTIBLE">CARGA DE TARJETA DE COMBUSTIBLE</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="excel-header font-bold" id="lbl-fila-dinamica" style="background-color: #d1d5db; color: black;">NO. DE TARJETA</td>
+                    <td><input type="text" id="val-fila-dinamica" class="input-excel font-bold" placeholder="..."></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- BLOQUE CENTRAL: DATOS DE BENEFICIARIO Y CLASIFICACION -->
+        <div class="grid grid-cols-2 gap-3 mb-3">
+            <!-- Columna Izquierda: Datos del Beneficiario -->
+            <div>
+                <table class="excel-table h-full">
+                    <tr>
+                        <td colspan="2" class="excel-header">DATOS DE BENEFICIARIO</td>
+                    </tr>
+                    <tr>
+                        <td class="w-2/5 font-bold">DESTINATARIO</td>
+                        <td class="w-3/5">
+                            <select id="select-beneficiario" class="input-excel uppercase font-bold text-blue-900" onchange="cargarDatosBancariosBeneficiario()">
+                                <option value="">-- SELECCIONE DESTINATARIO --</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr id="fila-banco">
+                        <td class="font-bold">BANCO RECEPTOR</td>
+                        <td><input type="text" id="banco" class="input-excel uppercase font-bold bg-gray-100 text-gray-700 cursor-not-allowed" readonly placeholder="Autocompletado..."></td>
+                    </tr>
+                    <tr id="fila-clabe">
+                        <td class="font-bold">CLABE INTERBANCARIA</td>
+                        <td><input type="text" id="clabe" class="input-excel font-bold bg-gray-100 text-gray-700 cursor-not-allowed" readonly value="ND"></td>
+                    </tr>
+                    <tr id="fila-cuenta">
+                        <td class="font-bold">CUENTA BANCARIA</td>
+                        <td><input type="text" id="cuenta" class="input-excel font-bold bg-gray-100 text-gray-700 cursor-not-allowed" readonly placeholder="Autocompletado..."></td>
+                    </tr>
+                    <tr id="fila-num-tarjeta">
+                        <td class="font-bold">NUMERO DE TARJETA</td>
+                        <td><input type="text" id="num-tarjeta" class="input-excel font-bold bg-gray-100 text-gray-700 cursor-not-allowed" readonly placeholder="Autocompletado..."></td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Columna Derecha: Clasificación -->
+            <div>
+                <table class="excel-table h-full">
+                    <tr>
+                        <td colspan="2" class="excel-header">CLASIFICACION</td>
+                    </tr>
+                    <tr>
+                        <td class="w-2/5 font-bold">TIPO DE GASTO</td>
+                        <td class="w-3/5">
+                            <select id="select-tipo-gasto" class="input-excel uppercase font-bold text-blue-900 cursor-pointer">
+                                <option value="OPERATIVO">OPERATIVO</option>
+                                <option value="ADMINISTRATIVO">ADMINISTRATIVO</option>
+                                <option value="DIRECCION">DIRECCION</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold">CONCEPTO DEL PAGO</td>
+                        <td>
+                            <select id="select-motivo" class="input-excel uppercase font-bold" onchange="actualizarCatalogoConcepto()">
+                                <option value="">-- SELECCIONE CONCEPTO --</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold">CLAVE CATALOGO</td>
+                        <td><input type="text" id="clave-catalogo" class="input-excel font-bold bg-gray-100 text-gray-700 cursor-not-allowed" readonly value=""></td>
+                    </tr>
+                    <tr id="fila-ff">
+                        <td class="font-bold">FF</td>
+                        <td>
+                            <select id="select-ff" class="input-excel uppercase font-bold text-blue-900 cursor-pointer" onchange="actualizarUbicacionesPorFF()">
+                                <option value="MEXICO">MEXICO</option>
+                                <option value="MONTERREY">MONTERREY</option>
+                                <option value="GUADALAJARA">GUADALAJARA</option>
+                                <option value="MERIDA">MERIDA</option>
+                                <option value="VILLAHERMOSA">VILLAHERMOSA</option>
+                                <option value="CORPORATIVO">CORPORATIVO</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr id="fila-ubicacion">
+                        <td class="font-bold">UBICACIÓN</td>
+                        <td>
+                            <select id="select-plaza" class="input-excel uppercase font-bold cursor-pointer">
+                                <!-- Dinámico según FF -->
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold">PROYECTO ASIGNADO (OPERATIVO)</td>
+                        <td>
+                            <select id="select-proyecto" class="input-excel uppercase font-bold cursor-pointer" onchange="actualizarProyectoDinamico()">
+                                <option value="ATT">AT&T</option>
+                                <option value="AT&TC">AT&TC</option>
+                                <option value="MERCADO_LIBRE">MERCADO LIBRE</option>
+                                <option value="TELCELC">TELCELC</option>
+                                <option value="ADMINISTRATIVO">ADMINISTRATIVO</option>
+                            </select>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- DATOS DEL PAGO (DETALLE DE PARTIDAS - 11 FILAS) -->
+        <table class="excel-table mb-2">
+            <thead>
+                <tr class="excel-header">
+                    <th class="w-1/12">CANTIDAD</th>
+                    <th class="w-7/12">DESCRIPCION DEL SERVICIO Y/O PRODUCTO</th>
+                    <th class="w-2/12">UNITARIO</th>
+                    <th class="w-2/12">IMPORTE</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-partidas">
+                <tr>
+                    <td class="text-center"><input type="number" class="input-excel text-center partida-cant" value="1" oninput="calcularTotal()"></td>
+                    <td><input type="text" id="partida-desc-0" class="input-excel uppercase partida-desc" placeholder="Detalle del servicio..."></td>
+                    <td><input type="number" class="input-excel text-right partida-unit" value="0.00" oninput="calcularTotal()"></td>
+                    <td><input type="text" class="input-excel text-right font-bold partida-imp-fila" readonly value="$ 0.00"></td>
+                </tr>
+                <tr>
+                    <td class="text-center"><input type="number" class="input-excel text-center partida-cant" value="0" oninput="calcularTotal()"></td>
+                    <td><input type="text" id="partida-desc-1" class="input-excel uppercase partida-desc"></td>
+                    <td><input type="number" class="input-excel text-right partida-unit" value="0.00" oninput="calcularTotal()"></td>
+                    <td><input type="text" class="input-excel text-right font-bold partida-imp-fila" readonly value="$ -"></td>
+                </tr>
+                <tr>
+                    <td class="text-center"><input type="number" class="input-excel text-center partida-cant" value="0" oninput="calcularTotal()"></td>
+                    <td><input type="text" id="partida-desc-2" class="input-excel uppercase partida-desc"></td>
+                    <td><input type="number" class="input-excel text-right partida-unit" value="0.00" oninput="calcularTotal()"></td>
+                    <td><input type="text" class="input-excel text-right font-bold partida-imp-fila" readonly value="$ -"></td>
+                </tr>
+                <tr>
+                    <td class="text-center"><input type="number" class="input-excel text-center partida-cant" value="0" oninput="calcularTotal()"></td>
+                    <td><input type="text" id="partida-desc-3" class="input-excel uppercase partida-desc"></td>
+                    <td><input type="number" class="input-excel text-right partida-unit" value="0.00" oninput="calcularTotal()"></td>
+                    <td><input type="text" class="input-excel text-right font-bold partida-imp-fila" readonly value="$ -"></td>
+                </tr>
+                <tr>
+                    <td class="text-center"><input type="number" class="input-excel text-center partida-cant" value="0" oninput="calcularTotal()"></td>
+                    <td><input type="text" id="partida-desc-4" class="input-excel uppercase partida-desc"></td>
+                    <td><input type="number" class="input-excel text-right partida-unit" value="0.00" oninput="calcularTotal()"></td>
+                    <td><input type="text" class="input-excel text-right font-bold partida-imp-fila" readonly value="$ -"></td>
+                </tr>
+                <tr>
+                    <td class="text-center"><input type="number" class="input-excel text-center partida-cant" value="0" oninput="calcularTotal()"></td>
+                    <td><input type="text" id="partida-desc-5" class="input-excel uppercase partida-desc"></td>
+                    <td><input type="number" class="input-excel text-right partida-unit" value="0.00" oninput="calcularTotal()"></td>
+                    <td><input type="text" class="input-excel text-right font-bold partida-imp-fila" readonly value="$ -"></td>
+                </tr>
+                <tr>
+                    <td class="text-center"><input type="number" class="input-excel text-center partida-cant" value="0" oninput="calcularTotal()"></td>
+                    <td><input type="text" id="partida-desc-6" class="input-excel uppercase partida-desc"></td>
+                    <td><input type="number" class="input-excel text-right partida-unit" value="0.00" oninput="calcularTotal()"></td>
+                    <td><input type="text" class="input-excel text-right font-bold partida-imp-fila" readonly value="$ -"></td>
+                </tr>
+                <tr>
+                    <td class="text-center"><input type="number" class="input-excel text-center partida-cant" value="0" oninput="calcularTotal()"></td>
+                    <td><input type="text" id="partida-desc-7" class="input-excel uppercase partida-desc"></td>
+                    <td><input type="number" class="input-excel text-right partida-unit" value="0.00" oninput="calcularTotal()"></td>
+                    <td><input type="text" class="input-excel text-right font-bold partida-imp-fila" readonly value="$ -"></td>
+                </tr>
+                <tr>
+                    <td class="text-center"><input type="number" class="input-excel text-center partida-cant" value="0" oninput="calcularTotal()"></td>
+                    <td><input type="text" id="partida-desc-8" class="input-excel uppercase partida-desc"></td>
+                    <td><input type="number" class="input-excel text-right partida-unit" value="0.00" oninput="calcularTotal()"></td>
+                    <td><input type="text" class="input-excel text-right font-bold partida-imp-fila" readonly value="$ -"></td>
+                </tr>
+                <tr>
+                    <td class="text-center"><input type="number" class="input-excel text-center partida-cant" value="0" oninput="calcularTotal()"></td>
+                    <td><input type="text" id="partida-desc-9" class="input-excel uppercase partida-desc"></td>
+                    <td><input type="number" class="input-excel text-right partida-unit" value="0.00" oninput="calcularTotal()"></td>
+                    <td><input type="text" class="input-excel text-right font-bold partida-imp-fila" readonly value="$ -"></td>
+                </tr>
+                <tr>
+                    <td class="text-center"><input type="number" class="input-excel text-center partida-cant" value="0" oninput="calcularTotal()"></td>
+                    <td><input type="text" id="partida-desc-10" class="input-excel uppercase partida-desc"></td>
+                    <td><input type="number" class="input-excel text-right partida-unit" value="0.00" oninput="calcularTotal()"></td>
+                    <td><input type="text" class="input-excel text-right font-bold partida-imp-fila" readonly value="$ -"></td>
+                </tr>
+            </thead>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="excel-header text-right pr-4 font-bold text-sm">TOTAL</td>
+                    <td class="text-right font-bold text-sm bg-gray-100" id="lbl-total">$ 0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- MONTO EN LETRAS -->
+        <div class="mb-4 text-xs">
+            <span class="font-bold block mb-1">MONTO EN LETRAS:</span>
+            <div id="lbl-monto-letras" class="italic text-gray-900 font-bold border-b border-black py-1">Cero pesos 00/100 M.N.</div>
+        </div>
+
+        <!-- INFORMACION ADICIONAL -->
+        <div class="mb-8 text-xs">
+            <div class="excel-header text-left px-2 py-1 mb-1 font-bold inline-block" style="font-size: 10px;">INFORMACION ADICIONAL</div>
+            <div class="border-b border-black w-full py-2">
+                <input type="text" id="observaciones" class="input-excel uppercase font-bold text-gray-900" placeholder="Observaciones o referencias adicionales...">
+            </div>
+            <div class="border-b border-black w-full py-2"></div>
+            <div class="border-b border-black w-full py-2"></div>
+        </div>
+
+        <!-- FIRMAS -->
+        <div class="grid grid-cols-3 gap-6 text-center pt-6 text-[10px]">
+            <div class="flex flex-col items-center">
+                <div class="border border-black w-full py-1 font-bold bg-gray-200 mb-12">COMPRUEBA</div>
+                <div class="border-b border-black w-3/4 pb-1 uppercase font-bold" id="firma-comprueba-txt">NOMBRE SOLICITANTE</div>
+                <span class="text-[9px] mt-1 font-bold">NOMBRE Y FIRMA</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="border border-black w-full py-1 font-bold bg-gray-200 mb-12">AUTORIZACION JEFE DIRECTO</div>
+                <div class="border-b border-black w-3/4 pb-1 uppercase font-bold"><input type="text" id="firma-aut-jefe" class="input-excel text-center font-bold bg-gray-50" readonly></div>
+                <span class="text-[9px] mt-1 font-bold">NOMBRE Y FIRMA</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="border border-black w-full py-1 font-bold bg-gray-200 mb-12">AUTORIZACION A PAGO (SOLO FINANZAS)</div>
+                <div class="border-b border-black w-3/4 pb-1 uppercase font-bold"><input type="text" id="firma-aut-finanzas" class="input-excel text-center font-bold" value="TANIA ELIZABETH PINELO FLORES"></div>
+                <span class="text-[9px] mt-1 font-bold">NOMBRE Y FIRMA</span>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center text-[9px] text-gray-500 mt-8 pt-2 border-t border-gray-300">
+            <span>Rev. 2.0</span>
+            <span>Fecha Revisión: Actualizada</span>
+            <span class="font-bold">FO-FIN-02/PR04</span>
+        </div>
+    </div>
+
+    <!-- VISTA 2: CUENTAS (DISEÑO ESTILO USERFORM) -->
+    <div id="vista-cuentas" class="max-w-4xl mx-auto bg-[#ece9d8] p-8 shadow-2xl border-2 border-gray-500 hidden font-sans">
+        
+        <!-- ENCABEZADO / LOGO IMAGEN Y BUSCADOR -->
+        <div class="flex items-start gap-6 mb-6">
+            <div class="w-24 h-24 bg-white border-2 border-black flex items-center justify-center shadow-md rounded p-1">
+                <img src="image/LOGO.jpg" alt="Logo PIBE LOGISTIC" class="w-full h-full object-contain">
+            </div>
+            <div class="flex-1">
+                <label class="block text-xs font-bold text-black mb-1">Buscar beneficiario:</label>
+                <select id="buscador-beneficiario-lista" class="w-full border-2 border-gray-400 p-2 text-xs uppercase bg-white font-bold shadow-inner cursor-pointer" onchange="seleccionarBeneficiarioExistente(this.value)">
+                    <option value="">-- SELECCIONE O BUSQUE BENEFICIARIO --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="text-center text-xs font-bold text-gray-700 my-4 uppercase tracking-wide">
+            o dar de alta nuevo beneficiario:
+        </div>
+
+        <!-- FORMULARIO DE ALTA -->
+        <div class="space-y-3 text-xs max-w-2xl mx-auto bg-[#f0f0f0] p-6 border-2 border-gray-400 shadow rounded">
+            <div class="grid grid-cols-12 items-center gap-2">
+                <label class="col-span-4 font-bold text-right pr-2">Nombre(s):</label>
+                <div class="col-span-8"><input type="text" id="cta-nombres" class="w-full border border-gray-400 bg-white p-1 text-xs uppercase shadow-inner" placeholder="..."></div>
+            </div>
+            <div class="grid grid-cols-12 items-center gap-2">
+                <label class="col-span-4 font-bold text-right pr-2">Apellido Paterno:</label>
+                <div class="col-span-8"><input type="text" id="cta-appat" class="w-full border border-gray-400 bg-white p-1 text-xs uppercase shadow-inner" placeholder="..."></div>
+            </div>
+            <div class="grid grid-cols-12 items-center gap-2">
+                <label class="col-span-4 font-bold text-right pr-2">Apellido Materno:</label>
+                <div class="col-span-8"><input type="text" id="cta-apmat" class="w-full border border-gray-400 bg-white p-1 text-xs uppercase shadow-inner" placeholder="..."></div>
+            </div>
+            <div class="grid grid-cols-12 items-center gap-2">
+                <label class="col-span-4 font-bold text-right pr-2">Banco Receptor:</label>
+                <div class="col-span-8">
+                    <select id="cta-banco" class="w-full border border-gray-400 bg-white p-1 text-xs uppercase font-bold shadow-inner cursor-pointer">
+                        <option value="">-- SELECCIONE BANCO --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid grid-cols-12 items-center gap-2">
+                <label class="col-span-4 font-bold text-right pr-2">CLABE Interbancaria:</label>
+                <div class="col-span-8"><input type="text" id="cta-clabe" maxlength="18" class="w-full border border-gray-400 bg-white p-1 text-xs shadow-inner" placeholder="18 DÍGITOS..." oninput="soloDigitos(this)"></div>
+            </div>
+            <div class="grid grid-cols-12 items-center gap-2">
+                <label class="col-span-4 font-bold text-right pr-2">No. de Tarjeta:</label>
+                <div class="col-span-8"><input type="text" id="cta-tarjeta" maxlength="16" class="w-full border border-gray-400 bg-white p-1 text-xs shadow-inner" placeholder="16 DÍGITOS..." oninput="soloDigitos(this)"></div>
+            </div>
+            <div class="grid grid-cols-12 items-center gap-2">
+                <label class="col-span-4 font-bold text-right pr-2">No. de Cuenta Bancaria:</label>
+                <div class="col-span-8"><input type="text" id="cta-cuenta" class="w-full border border-gray-400 bg-white p-1 text-xs shadow-inner" placeholder="CUENTA BANCARIA..." oninput="soloDigitos(this)"></div>
+            </div>
+
+            <div class="pt-4 flex justify-center">
+                <button onclick="guardarCuenta()" class="px-6 py-2 bg-[#e1dfc5] hover:bg-[#d4d2b8] border-2 border-gray-600 font-bold text-xs text-black shadow active:translate-y-0.5">GUARDAR DATOS</button>
+            </div>
+        </div>
+
+        <!-- LISTADO Y OPCION DE ELIMINAR / IMPORTAR CSV -->
+        <div class="mt-8 pt-4 border-t border-gray-400 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <input type="file" id="csv-file-input" accept=".csv,.txt" class="text-xs">
+                <button onclick="importarCSV()" class="px-3 py-1 bg-blue-600 text-white font-bold text-[11px] rounded shadow">Importar CSV</button>
+            </div>
+            <button onclick="eliminarTodasLasCuentas()" class="px-3 py-1 bg-red-600 text-white font-bold text-[11px] rounded shadow">Eliminar Mis Cuentas</button>
+        </div>
+
+        <div class="mt-4 overflow-x-auto max-h-60 overflow-y-auto border border-gray-400 bg-white">
+            <table class="min-w-full divide-y divide-gray-200 text-xs">
+                <thead class="bg-[#1e5631] text-white sticky top-0">
+                    <tr>
+                        <th class="px-3 py-2 border">NOMBRE</th>
+                        <th class="px-3 py-2 border">BANCO</th>
+                        <th class="px-3 py-2 border">CLABE</th>
+                        <th class="px-3 py-2 border">TARJETA</th>
+                        <th class="px-3 py-2 border">CUENTA</th>
+                        <th class="px-3 py-2 border text-center">ACCIÓN</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-cuentas-body" class="divide-y divide-gray-200"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- VISTA 3: CONTROL DE SOLICITUDES (FILTRADO POR USUARIO EN SESIÓN) -->
+    <div id="vista-control" class="max-w-7xl mx-auto bg-white p-6 shadow-2xl hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">CONTROL DE SOLICITUDES (MIS REGISTROS)</h2>
+            <button onclick="exportarExcelSimulado()" class="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded shadow hover:bg-emerald-700">Exportar Mis Registros (CSV)</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 border text-xs">
+                <thead class="bg-[#1e5631] text-white">
+                    <tr>
+                        <th class="px-3 py-2 border">FECHA DE SOLICITUD</th>
+                        <th class="px-3 py-2 border">NO. DE CONTROL DIRECCION</th>
+                        <th class="px-3 py-2 border">STATUS COMPROBACIÓN</th>
+                        <th class="px-3 py-2 border">FECHA DE COMPROBACIÓN</th>
+                        <th class="px-3 py-2 border">DIAS ATRASO COMPROBACIÓN</th>
+                        <th class="px-3 py-2 border">SOLICITANTE</th>
+                        <th class="px-3 py-2 border">ÁREA</th>
+                        <th class="px-3 py-2 border">DESTINATARIO</th>
+                        <th class="px-3 py-2 border">TOTAL</th>
+                        <th class="px-3 py-2 border">FORMA DE PAGO</th>
+                        <th class="px-3 py-2 border">TIPO DE GASTO</th>
+                        <th class="px-3 py-2 border">CONCEPTO DEL PAGO</th>
+                        <th class="px-3 py-2 border">UBICACIÓN</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-control-body" class="bg-white divide-y divide-gray-200"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const USUARIOS_SISTEMA = [
+            { nombre: "MARIA ISABEL LEIJA GUERRERO", area: "ADQUISICIONES", jefe: "TANIA ELIZABETH PINELO FLORES", password: "116", prefijoControl: "PLAD" },
+            { nombre: "MARIA ISABEL LEIJA GUERRERO", area: "FINANZAS", jefe: "TANIA ELIZABETH PINELO FLORES", password: "116", prefijoControl: "PLFI" },
+            { nombre: "LUIS FERNANDO SIETE CHAMAN", area: "FINANZAS", jefe: "TANIA ELIZABETH PINELO FLORES", password: "2307", prefijoControl: "PLAF" },
+            { nombre: "ISAAC SEVERINO GUERRERO", area: "OPERACIONES", jefe: "ARTURO PINELO HERRERA", password: "1326", prefijoControl: "POMX" },
+            { nombre: "PERSONAL CONTROL VEHICULAR", area: "CONTROL VEHICULAR", jefe: "TANIA ELIZABETH PINELO FLORES", password: "4279", prefijoControl: "PLPV" },
+            { nombre: "PERSONAL RRHH", area: "RRHH", jefe: "TANIA ELIZABETH PINELO FLORES", password: "8603", prefijoControl: "PLRH" },
+            { nombre: "AARON LANDEROS", area: "SISTEMAS", jefe: "ALBERTO BERMUDEZ MELENDEZ", password: "1680", prefijoControl: "PLDS" },
+            { nombre: "DANIELA MICHELLE ROJAS RIZO", area: "DIRECCION", jefe: "ALEJANDRO HECTOR PINELO HERRERA", password: "4827", prefijoControl: "PLDI" },
+            { nombre: "NOHEMI MARTINEZ SOTO", area: "CONTABILIDAD", jefe: "FRANCISCO VALENTIN BEJARANO BARRANCO", password: "1934", prefijoControl: "PLCO" },
+            { nombre: "PERSONAL OPERACIONES TODAS", area: "OPERACIONES", jefe: "MARIA DE JESUS PEREZ TREJO", password: "4279", prefijoControl: "PLCA" },
+            { nombre: "JOSE OSWALDO PEÑA AREVALO", area: "OPERACIONES", jefe: "MARIA DE JESUS PEREZ TREJO", password: "7508", prefijoControl: "PLVS" },
+            { nombre: "KASSANDRA SARAHI DE DIOS ROBLES", area: "OPERACIONES", jefe: "MARIA DE JESUS PEREZ TREJO", password: "2661", prefijoControl: "PLHM" },
+            { nombre: "SARA VIRGINIA RODRIGUEZ HERNANDEZ", area: "OPERACIONES", jefe: "MARIA DE JESUS PEREZ TREJO", password: "9042", prefijoControl: "PLMD" },
+            { nombre: "JOSSY MARAI MORALES PADILLA", area: "OPERACIONES", jefe: "MARIA DE JESUS PEREZ TREJO", password: "5189", prefijoControl: "PLCU" },
+            { nombre: "RUBEN ANTOVANI ZUPPA PACHECO", area: "OPERACIONES", jefe: "MARIA DE JESUS PEREZ TREJO", password: "3470", prefijoControl: "PLMT" },
+            { nombre: "JUAN PABLO ITURRIAGA SANCHEZ", area: "OPERACIONES", jefe: "MARIA DE JESUS PEREZ TREJO", password: "6295", prefijoControl: "PLLE" },
+            { nombre: "PERSONAL OPERACIONES GUADALAJARA", area: "OPERACIONES", jefe: "MARIA DE JESUS PEREZ TREJO", password: "7713", prefijoControl: "PLGD" }
+        ];
+
+        const CATALOGO_BANCOS = [
+            "ABC CAPITAL", "ACTINVER", "AFIRME", "ARCUS FI", "ASP INTEGRA OPC", "AUTOFIN", "AZTECA", "BaBien", "BAJIO", "BANAMEX", "BANCO COVALTO", "BANCOMEXT", "BANCOPPEL", "BANCO S3", "BANCREA", "BANJERCITO", "BANKAOOL", "BANK OF AMERICA", "BANK OF CHINA", "BANOBRAS", "BANORTE", "BANREGIO", "BANSI", "BANXICO", "BARCLAYS", "BBASE", "BBVA MEXICO", "BMONEX", "CAJA POP MEXICA", "CAJA TELEFONIST", "Cartera Digital", "CB INTERCAM", "CIBANCO", "CI BOLSA", "CITI MEXICO", "CLS", "CoDi Valida", "COMPARTAMOS", "CONSUBANCO", "CREDICAPITAL", "CREDICLUB", "CRISTOBAL COLON", "Cuenca", "DONDE", "FINAMEX", "FINCOMUN", "FOMPED", "FONDEADORA", "FONDO (FIRA)", "GBM", "HIPOTECARIA FED", "HSBC", "ICBC", "INBURSA", "INDEVAL", "INMOBILIARIO", "INTERCAM BANCO", "INVEX", "JP MORGAN", "KLAR", "KUSPIT", "LIBERTAD", "MASARI", "Mercado Pago W", "MIFEL", "MIZUHO BANK", "MONEXCB", "MUFG", "MULTIVA BANCO", "NAFIN", "NU MEXICO", "NVIO", "PAGATODO", "Peibo", "PROFUTURO", "SABADELL", "SANTANDER", "SCOTIABANK", "SHINHAN", "SPIN BY OXXO", "STP", "TESORED", "TRANSFER", "UNAGRA", "VALMEX", "VALUE", "VECTOR", "VE POR MAS", "VOLKSWAGEN"
+        ];
+
+        const CATALOGO_UBICACIONES = {
+            "MEXICO": ["MEXICO LOCAL", "HIDALGO", "MORELIA", "PUEBLA", "TLAXCALA", "MORELOS", "GUERRERO", "VERACRUZ", "XALAPA", "CORDOBA", "TIJUANA", "ENSENADA", "MEXICALI", "CHIHUAHUA", "CD JUAREZ", "POZA RICA", "OAXACA", "TOLUCA", "TAMPICO", "CD VICTORIA", "HERMOSILLO"],
+            "MONTERREY": ["MONTERREY LOCAL", "REYNOSA", "NUEVO LAREDO", "MATAMOROS", "PIEDRAS NEGRAS", "ACUÑA", "SALTILLO", "TORREON", "DURANGO"],
+            "GUADALAJARA": ["CULIACAN", "LOS MOCHIS", "MAZATLAN", "GUAMUCHIL", "GUASAVE", "LEON", "IRAPUATO", "COLIMA", "MANZANILLO", "AGUASCALIENTES", "ZACATECAS", "ZAMORA", "VALLARTA", "TEPIC"],
+            "MERIDA": ["MERIDA LOCAL", "CAMPECHE", "CANCUN", "CHETUMAL"],
+            "VILLAHERMOSA": ["CD CARMEN", "VILLAHERMOSA LOCAL", "CHIAPAS", "MINATITLAN", "COATZACOALCOS"],
+            "CORPORATIVO": ["MEXICO"]
+        };
+
+        const CATALOGO_CONCEPTOS = [
+            { aux: "ALIMENTOS DIRECCION", clave: "00-036-000" },
+            { aux: "ALIMENTOS EMPLEADOS", clave: "00-047-000" },
+            { aux: "ALIMENTOS POR RUTA", clave: "00-052-000" },
+            { aux: "ARRASTRES EN GRUA", clave: "00-047-000" },
+            { aux: "ARRENDAMIENTO DE EQUIPO DE OFICINA", clave: "00-025-000" },
+            { aux: "ARRENDAMIENTO DE INMUEBLES", clave: "00-055-00" },
+            { aux: "ARRENDAMIENTO DE MAQUINARIA", clave: "110-000-00" },
+            { aux: "ARRENDAMIENTO DE VEHICULOS", clave: "00-057-000" },
+            { aux: "BONOS Y APOYOS ESPECIALES", clave: "00-043-000" },
+            { aux: "CAJA CHICA", clave: "1150-005-000" },
+            { aux: "CASETAS, PEAJES Y TAGS", clave: "00-016-000" },
+            { aux: "COMBUSTIBLES Y LUBRICANTES", clave: "70-000-000" },
+            { aux: "COMPRA DE EQUIPOS TELEFONICOS", clave: "00-033-000" },
+            { aux: "CREDITOS", clave: "00-026-000" },
+            { aux: "CUOTAS Y SUSCRIPCIONES", clave: "00-041-000" },
+            { aux: "CURSOS Y BECAS", clave: "1310-004" },
+            { aux: "DEPOSITOS EN GARANTIA", clave: "1310-003" },
+            { aux: "DESPENSA E INSUMOS DE CAFETERIA", clave: "00-057-000" },
+            { aux: "DIRECCION", clave: "00-049-000" },
+            { aux: "ENERGIA ELECTRICA", clave: "1420-000-000" },
+            { aux: "EQUIPO DE COMPUTO", clave: "00-053-000" },
+            { aux: "EQUIPO DE TRANSPORTE", clave: "00-054-000" },
+            { aux: "ESTACIONAMIENTO", clave: "00-033-000" },
+            { aux: "FLETES Y ACARREOS", clave: "00-046-000" },
+            { aux: "GASTOS DE INSTALACION", clave: "1201-000-000" },
+            { aux: "GASTOS DE REPRESENTACION", clave: "00-022-000" },
+            { aux: "GASTOS FIN DE AÑO", clave: "7200-001-000" },
+            { aux: "GASTOS MEDICOS", clave: "00-032-000" },
+            { aux: "GRATIFICACIONES", clave: "00-036-000" },
+            { aux: "HONORARIOS PERSONAS FISICAS", clave: "00-021-000" },
+            { aux: "HONORARIOS PERSONAS MORALES", clave: "00-022-000" },
+            { aux: "HOSPEDAJE", clave: "00-023-000" },
+            { aux: "IMPUESTOS", clave: "00-024-000" },
+            { aux: "INSUMOS Y REFACCIONES VEHICULARES", clave: "00-058-000" },
+            { aux: "INTERESES", clave: "00-020-000" },
+            { aux: "LICENCIAS, TENENCIAS Y PLACAS", clave: "00-020-000" },
+            { aux: "MANTENIMIENTO DE EQUIPO DE COMPUTO", clave: "1310-005" },
+            { aux: "MANTENIMIENTO DE EQUIPO DE TRANSPORTE", clave: "00-029-000" },
+            { aux: "MANTENIMIENTO Y CONSERVACION DE INSTALACIONES", clave: "00-038-000" },
+            { aux: "MATERIAL DE EMPAQUE Y EMBALAJE", clave: "1170-000" },
+            { aux: "MATERIALES CONSUMIBLES DE LIMPIEZA", clave: "00-050-000" },
+            { aux: "MOBILIARIO Y EQUIPO DE OFICINA", clave: "00-027-000" },
+            { aux: "MULTAS E INFRACCIONES", clave: "00-026-000" },
+            { aux: "PAPELERIA Y ARTICULOS DE OFICINA", clave: "00-027-000" },
+            { aux: "PAQUETERIA Y MENSAJERIA", clave: "00-027-000" },
+            { aux: "PASAJES Y TRANSPORTES LOCALES", clave: "00-022-000" },
+            { aux: "PATENTES Y MARCAS", clave: "00-025-000" },
+            { aux: "PRESTAMOS", clave: "00-040-000" },
+            { aux: "PROPAGANDA Y PUBLICIDAD", clave: "00-045-000" },
+            { aux: "REPARACIONES VEHICULARES", clave: "00-059-000" },
+            { aux: "SEGURIDAD SOCIAL", clave: "00-036-000" },
+            { aux: "SEGUROS Y FIANZAS", clave: "00-042-000" },
+            { aux: "SERVICIO DE AGUA", clave: "00-044-000" },
+            { aux: "SERVICIO DE GAS", clave: "00-012-000" },
+            { aux: "SERVICIO DE LIMPIEZA Y FUMIGACIONES", clave: "00-030-000" },
+            { aux: "TELEFONIA MOVIL E INTERNET", clave: "00-031-000" },
+            { aux: "UNIFORMES Y EQUIPO DE SEGURIDAD", clave: "00-039-000" },
+            { aux: "VERIFICACION VEHICULAR", clave: "1410-000-000" },
+            { aux: "VIGILANCIA Y SEGURIDAD", clave: "" },
+            { aux: "VUELOS COMERCIALES", clave: "" }
+        ];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha-sol').value = hoy;
+            poblarSelectBancos();
+            poblarLoginUsuarios();
+            actualizarUbicacionesPorFF();
+            verificarSesionActiva();
+            actualizarFormaPagoDinamica();
+            actualizarProyectoDinamico();
+            calcularTotal();
+        });
+
+        function obtenerCuentasUsuarioActual() {
+            const sesion = JSON.parse(localStorage.getItem('pibe_sesion_activa'));
+            if (!sesion) return [];
+            const claveKey = `pibe_cuentas_${sesion.nombre}_${sesion.area}`.replace(/\s+/g, '_');
+            let cuentas = JSON.parse(localStorage.getItem(claveKey));
+            
+            if (!cuentas) {
+                cuentas = [
+                    { nombre: "PLUXEE MEXICO SA DE CV", banco: "HSBC", clabe: "02118055030006", tarjeta: "", cuenta: "", rfc: "PME1106248KA" },
+                    { nombre: "TOTAL PLAY TELECOMUNICACIONES S.A.P.I. DE C.V.", banco: "BBVA", clabe: "ND", tarjeta: "", cuenta: "", rfc: "TPT050309C88" },
+                    { nombre: "PASE SERVICIOS ELECTRONICOS", banco: "STP", clabe: "684180069000375724", tarjeta: "", cuenta: "", rfc: "PSE0309304S4" }
+                ];
+                localStorage.setItem(claveKey, JSON.stringify(cuentas));
+            }
+            return cuentas;
+        }
+
+        function guardarCuentasUsuarioActual(cuentas) {
+            const sesion = JSON.parse(localStorage.getItem('pibe_sesion_activa'));
+            if (!sesion) return;
+            const claveKey = `pibe_cuentas_${sesion.nombre}_${sesion.area}`.replace(/\s+/g, '_');
+            localStorage.setItem(claveKey, JSON.stringify(cuentas));
+        }
+
+        function soloDigitos(input) {
+            input.value = input.value.replace(/[^0-9]/g, '');
+        }
+
+        function poblarLoginUsuarios() {
+            const selLogin = document.getElementById('login-usuario-select');
+            selLogin.innerHTML = '<option value="">-- SELECCIONE USUARIO Y ÁREA --</option>';
+            USUARIOS_SISTEMA.forEach((u, index) => {
+                let opt = document.createElement('option');
+                opt.value = index;
+                opt.text = `${u.nombre} (${u.area})`;
+                selLogin.appendChild(opt);
+            });
+        }
+
+        function poblarSelectBancos() {
+            const selBanco = document.getElementById('cta-banco');
+            selBanco.innerHTML = '<option value="">-- SELECCIONE BANCO --</option>';
+            CATALOGO_BANCOS.forEach(banco => {
+                let opt = document.createElement('option');
+                opt.value = banco;
+                opt.text = banco;
+                selBanco.appendChild(opt);
+            });
+        }
+
+        function actualizarUbicacionesPorFF() {
+            const ffSeleccionado = document.getElementById('select-ff').value;
+            const selPlaza = document.getElementById('select-plaza');
+            selPlaza.innerHTML = "";
+            
+            const ciudades = CATALOGO_UBICACIONES[ffSeleccionado] || ["MEXICO"];
+            ciudades.forEach(ciudad => {
+                let opt = document.createElement('option');
+                opt.value = ciudad;
+                opt.text = ciudad;
+                selPlaza.appendChild(opt);
+            });
+        }
+
+        function actualizarProyectoDinamico() {
+            const proyecto = document.getElementById('select-proyecto').value;
+            const filaFF = document.getElementById('fila-ff');
+            const filaUbicacion = document.getElementById('fila-ubicacion');
+
+            if (proyecto === "MERCADO_LIBRE" || proyecto === "TELCELC") {
+                filaFF.style.display = "none";
+                filaUbicacion.style.display = "none";
+            } else {
+                filaFF.style.display = "";
+                filaUbicacion.style.display = "";
+            }
+        }
+
+        function poblarListasDesplegables() {
+            const selConcepto = document.getElementById('select-motivo');
+            selConcepto.innerHTML = '<option value="">-- SELECCIONE CONCEPTO --</option>';
+            CATALOGO_CONCEPTOS.forEach(item => {
+                let opt = document.createElement('option');
+                opt.value = item.aux;
+                opt.text = item.aux;
+                selConcepto.appendChild(opt);
+            });
+
+            const selBenef = document.getElementById('select-beneficiario');
+            selBenef.innerHTML = '<option value="">-- SELECCIONE DESTINATARIO --</option>';
+            
+            const buscadorCuentas = document.getElementById('buscador-beneficiario-lista');
+            buscadorCuentas.innerHTML = '<option value="">-- SELECCIONE O BUSQUE BENEFICIARIO --</option>';
+
+            let cuentasUsuario = obtenerCuentasUsuarioActual();
+            cuentasUsuario.forEach(c => {
+                let opt1 = document.createElement('option');
+                opt1.value = c.nombre;
+                opt1.text = c.nombre;
+                selBenef.appendChild(opt1);
+
+                let opt2 = document.createElement('option');
+                opt2.value = c.nombre;
+                opt2.text = c.nombre;
+                buscadorCuentas.appendChild(opt2);
+            });
+        }
+
+        function seleccionarBeneficiarioExistente(nombre) {
+            if(!nombre) return;
+            let cuentasUsuario = obtenerCuentasUsuarioActual();
+            let c = cuentasUsuario.find(x => x.nombre === nombre);
+            if(c) {
+                let partes = c.nombre.split(' ');
+                document.getElementById('cta-nombres').value = partes[0] || '';
+                document.getElementById('cta-appat').value = partes[1] || '';
+                document.getElementById('cta-apmat').value = partes.slice(2).join(' ') || '';
+                document.getElementById('cta-banco').value = c.banco || '';
+                document.getElementById('cta-clabe').value = c.clabe !== 'ND' ? c.clabe : '';
+                document.getElementById('cta-tarjeta').value = c.tarjeta || '';
+                document.getElementById('cta-cuenta').value = c.cuenta || '';
+            }
+        }
+
+        function cargarDatosBancariosBeneficiario() {
+            const nombreSel = document.getElementById('select-beneficiario').value;
+            let cuentasUsuario = obtenerCuentasUsuarioActual();
+            let datos = cuentasUsuario.find(c => c.nombre === nombreSel);
+            if(datos) {
+                document.getElementById('banco').value = datos.banco || "";
+                document.getElementById('clabe').value = datos.clabe || "ND";
+                document.getElementById('cuenta').value = datos.cuenta || "";
+                document.getElementById('num-tarjeta').value = datos.tarjeta || "";
+            } else {
+                document.getElementById('banco').value = "";
+                document.getElementById('clabe').value = "ND";
+                document.getElementById('cuenta').value = "";
+                document.getElementById('num-tarjeta').value = "";
+            }
+        }
+
+        function actualizarFormaPagoDinamica() {
+            const formaPago = document.getElementById('select-forma-pago').value;
+            const lblDinamico = document.getElementById('lbl-fila-dinamica');
+            const filaDinamicaContainer = lblDinamico.closest('tr');
+            
+            const filaBanco = document.getElementById('fila-banco');
+            const filaClabe = document.getElementById('fila-clabe');
+            const filaCuenta = document.getElementById('fila-cuenta');
+            const filaNumTarjeta = document.getElementById('fila-num-tarjeta');
+
+            if (formaPago === "TRANSFERENCIA ELECTRONICA DE FONDOS") {
+                filaBanco.style.display = "";
+                filaClabe.style.display = "";
+                filaCuenta.style.display = "";
+                filaNumTarjeta.style.display = "";
+            } else {
+                filaBanco.style.display = "none";
+                filaClabe.style.display = "none";
+                filaCuenta.style.display = "none";
+                filaNumTarjeta.style.display = "none";
+            }
+
+            if (formaPago.includes("TARJETA")) {
+                lblDinamico.innerText = "NO. DE TARJETA";
+                filaDinamicaContainer.style.display = "";
+            } else if (formaPago.includes("REFERENCIADO")) {
+                lblDinamico.innerText = "NO. DE REFERENCIA";
+                filaDinamicaContainer.style.display = "";
+            } else if (formaPago.includes("TAG")) {
+                lblDinamico.innerText = "NO. DE TAG";
+                filaDinamicaContainer.style.display = "";
+            } else if (formaPago.includes("CHEQUE")) {
+                lblDinamico.innerText = "NO. DE CHEQUE";
+                filaDinamicaContainer.style.display = "";
+            } else {
+                lblDinamico.innerText = "INFORMACIÓN";
+                filaDinamicaContainer.style.display = "none";
+            }
+        }
+
+        function iniciarSesion() {
+            const indiceUsuario = document.getElementById('login-usuario-select').value;
+            const passwordIngresada = document.getElementById('login-password').value.trim();
+
+            if(indiceUsuario === "") {
+                alert("Por favor seleccione un usuario.");
+                return;
+            }
+
+            let usuarioObj = USUARIOS_SISTEMA[parseInt(indiceUsuario)];
+
+            if(passwordIngresada !== usuarioObj.password) {
+                alert("Contraseña incorrecta. Inténtalo de nuevo.");
+                return;
+            }
+
+            localStorage.setItem('pibe_sesion_activa', JSON.stringify(usuarioObj));
+            aplicarUsuarioActivo(usuarioObj);
+            document.getElementById('login-password').value = "";
+            document.getElementById('modal-login').classList.add('hidden');
+        }
+
+        function verificarSesionActiva() {
+            const sesionGuardada = localStorage.getItem('pibe_sesion_activa');
+            if(sesionGuardada) {
+                let usuarioObj = JSON.parse(sesionGuardada);
+                aplicarUsuarioActivo(usuarioObj);
+                document.getElementById('modal-login').classList.add('hidden');
+            } else {
+                document.getElementById('modal-login').classList.remove('hidden');
+            }
+        }
+
+        function aplicarUsuarioActivo(u) {
+            document.getElementById('lbl-usuario-activo').innerText = `Usuario: ${u.nombre} (${u.area})`;
+            document.getElementById('nombre-solic').value = u.nombre;
+            document.getElementById('area-solic').value = u.area;
+            document.getElementById('firma-comprueba-txt').innerText = u.nombre;
+            document.getElementById('firma-aut-jefe').value = u.jefe;
+            generarFolioAutomatico();
+            poblarListasDesplegables();
+            cargarTablasCuentas();
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('pibe_sesion_activa');
+            document.getElementById('login-usuario-select').value = "";
+            document.getElementById('login-password').value = "";
+            document.getElementById('modal-login').classList.remove('hidden');
+        }
+
+        function generarFolioAutomatico() {
+            const fechaVal = document.getElementById('fecha-sol').value;
+            if(!fechaVal) return;
+            const partes = fechaVal.split('-');
+            const anio = partes[0];
+            const mes = partes[1];
+            const dia = partes[2];
+            const ddmmyyyy = anio + mes + dia;
+            
+            const sesionGuardada = localStorage.getItem('pibe_sesion_activa');
+            let prefijoUser = "PL";
+            let areaUser = "GRAL";
+            if(sesionGuardada) {
+                let uObj = JSON.parse(sesionGuardada);
+                prefijoUser = uObj.prefijoControl || "PL";
+                areaUser = uObj.area || "GRAL";
+            }
+
+            const prefijoBase = `${prefijoUser}${ddmmyyyy}`;
+
+            let registros = JSON.parse(localStorage.getItem('pibe_control_solicitudes')) || [];
+            let maxSec = 0;
+            registros.forEach(r => {
+                if(r.noControlDireccion && r.noControlDireccion.startsWith(prefijoBase) && r.area === areaUser) {
+                    let partesFolio = r.noControlDireccion.split('-');
+                    let seq = parseInt(partesFolio[partesFolio.length - 1]);
+                    if(!isNaN(seq) && seq > maxSec) maxSec = seq;
+                }
+            });
+            document.getElementById('no-control').value = `${prefijoBase}-${String(maxSec + 1).padStart(3, '0')}`;
+        }
+
+        function guardarCuenta() {
+            const nombres = document.getElementById('cta-nombres').value.trim();
+            const appat = document.getElementById('cta-appat').value.trim();
+            const apmat = document.getElementById('cta-apmat').value.trim();
+            
+            const nombreCompleto = [nombres, appat, apmat].filter(Boolean).join(' ').toUpperCase();
+            
+            const banco = document.getElementById('cta-banco').value;
+            const clabe = document.getElementById('cta-clabe').value.trim();
+            const tarjeta = document.getElementById('cta-tarjeta').value.trim();
+            const cuenta = document.getElementById('cta-cuenta').value.trim();
+
+            if(!nombreCompleto) { alert("Captura al menos el Nombre del beneficiario."); return; }
+            if(!banco) { alert("Selecciona un Banco Receptor del catálogo."); return; }
+
+            // RESTRICCIÓN ESPECIAL PARA BANCO AZTECA: OBLIGATORIO LLENAR LOS TRES CAMPOS CORRECTAMENTE
+            if (banco === "AZTECA") {
+                if (!clabe || clabe.length !== 18 || !tarjeta || tarjeta.length !== 16 || !cuenta || cuenta.length <= 2) {
+                    alert("Error: Para el banco AZTECA es obligatorio llenar los tres campos (CLABE de 18 dígitos, No. de Tarjeta de 16 dígitos y No. de Cuenta válido).");
+                    return;
+                }
+            }
+
+            // VALIDACIONES GENERALES DE DÍGITOS
+            if(clabe !== "") {
+                if(clabe.length !== 18) {
+                    alert("Error: La CLABE Interbancaria debe contener exactamente 18 dígitos.");
+                    return;
+                }
+            }
+
+            if(tarjeta !== "") {
+                if(tarjeta.length !== 16) {
+                    alert("Error: El No. de Tarjeta debe contener exactamente 16 dígitos.");
+                    return;
+                }
+            }
+
+            if(cuenta !== "") {
+                if(cuenta.length <= 2) {
+                    alert("Error: El No. de Cuenta Bancaria debe contener más de 2 dígitos.");
+                    return;
+                }
+            }
+
+            if(!clabe && !tarjeta && !cuenta) {
+                alert("Error: Debes ingresar al menos un dato bancario (CLABE, Tarjeta o Cuenta).");
+                return;
+            }
+
+            let cuentasUsuario = obtenerCuentasUsuarioActual();
+            cuentasUsuario.push({ nombre: nombreCompleto, banco, clabe: clabe || 'ND', tarjeta, cuenta, rfc: '' });
+            guardarCuentasUsuarioActual(cuentasUsuario);
+            
+            alert("Cuenta guardada correctamente.");
+            
+            document.getElementById('cta-nombres').value = "";
+            document.getElementById('cta-appat').value = "";
+            document.getElementById('cta-apmat').value = "";
+            document.getElementById('cta-banco').value = "";
+            document.getElementById('cta-clabe').value = "";
+            document.getElementById('cta-tarjeta').value = "";
+            document.getElementById('cta-cuenta').value = "";
+            document.getElementById('buscador-beneficiario-lista').value = "";
+            
+            poblarListasDesplegables();
+            cargarTablasCuentas();
+        }
+
+        function eliminarCuenta(index) {
+            if(confirm("¿Estás seguro de eliminar esta cuenta?")) {
+                let cuentasUsuario = obtenerCuentasUsuarioActual();
+                cuentasUsuario.splice(index, 1);
+                guardarCuentasUsuarioActual(cuentasUsuario);
+                poblarListasDesplegables();
+                cargarTablasCuentas();
+            }
+        }
+
+        function eliminarTodasLasCuentas() {
+            if(confirm("¿Estás completamente seguro de ELIMINAR TODAS TUS CUENTAS?")) {
+                guardarCuentasUsuarioActual([]);
+                poblarListasDesplegables();
+                cargarTablasCuentas();
+                alert("Se han borrado tus cuentas.");
+            }
+        }
+
+        function importarCSV() {
+            const fileInput = document.getElementById('csv-file-input');
+            if(fileInput.files.length === 0) {
+                alert("Selecciona un archivo CSV primero.");
+                return;
+            }
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r\n|\n/);
+                let count = 0;
+                const primeraLinea = lines[0] || "";
+                const separador = primeraLinea.includes(';') ? ';' : ',';
+
+                let cuentasUsuario = obtenerCuentasUsuarioActual();
+
+                lines.forEach((line, idx) => {
+                    if(idx === 0 || !line.trim()) return;
+                    let cols = [];
+                    let entry = '';
+                    let inQuotes = false;
+                    for(let i = 0; i < line.length; i++) {
+                        let char = line[i];
+                        if(char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if(char === separador && !inQuotes) {
+                            cols.push(entry.trim());
+                            entry = '';
+                        } else {
+                            entry += char;
+                        }
+                    }
+                    cols.push(entry.trim());
+
+                    if(cols.length >= 1) {
+                        const nombre = cols[0] ? cols[0].replace(/"/g, '').trim().toUpperCase() : "";
+                        const banco = cols[1] ? cols[1].replace(/"/g, '').trim().toUpperCase() : "";
+                        const clabe = cols[2] ? cols[2].replace(/"/g, '').trim() : "ND";
+                        const tarjeta = cols[3] ? cols[3].replace(/"/g, '').trim() : "";
+                        const cuenta = cols[4] ? cols[4].replace(/"/g, '').trim() : "";
+                        const rfc = cols[5] ? cols[5].replace(/"/g, '').trim().toUpperCase() : "";
+
+                        if(nombre && nombre !== "NOMBRE") {
+                            cuentasUsuario.push({ nombre, banco, clabe, tarjeta, cuenta, rfc });
+                            count++;
+                        }
+                    }
+                });
+
+                guardarCuentasUsuarioActual(cuentasUsuario);
+                alert(`¡Se importaron ${count} cuentas exitosamente a tu usuario!`);
+                poblarListasDesplegables();
+                cargarTablasCuentas();
+            };
+            reader.readAsText(file, 'ISO-8859-1');
+        }
+
+        function cargarTablasCuentas() {
+            const tbodyCuentas = document.getElementById('tabla-cuentas-body');
+            tbodyCuentas.innerHTML = "";
+
+            let cuentasUsuario = obtenerCuentasUsuarioActual();
+
+            if(cuentasUsuario.length === 0) {
+                tbodyCuentas.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No tienes cuentas registradas.</td></tr>`;
+            } else {
+                cuentasUsuario.forEach((c, index) => {
+                    tbodyCuentas.innerHTML += `<tr>
+                        <td class="px-3 py-2 border font-bold">${c.nombre}</td>
+                        <td class="px-3 py-2 border">${c.banco || ''}</td>
+                        <td class="px-3 py-2 border">${c.clabe || ''}</td>
+                        <td class="px-3 py-2 border">${c.tarjeta || ''}</td>
+                        <td class="px-3 py-2 border">${c.cuenta || ''}</td>
+                        <td class="px-3 py-2 border text-center">
+                            <button onclick="eliminarCuenta(${index})" class="px-2 py-1 bg-red-600 text-white text-[10px] font-bold rounded hover:bg-red-700">Eliminar</button>
+                        </td>
+                    </tr>`;
+                });
+            }
+        }
+
+        function actualizarCatalogoConcepto() {
+            const conceptoSeleccionado = document.getElementById('select-motivo').value;
+            let item = CATALOGO_CONCEPTOS.find(c => c.aux === conceptoSeleccionado);
+            if(item) {
+                document.getElementById('clave-catalogo').value = item.clave;
+            } else {
+                document.getElementById('clave-catalogo').value = "";
+            }
+        }
+
+        function cambiarVista(vista) {
+            ['generador', 'cuentas', 'control'].forEach(v => {
+                document.getElementById(`vista-${v}`).classList.add('hidden');
+                document.getElementById(`tab-${v}`).classList.remove('active');
+            });
+
+            document.getElementById(`vista-${vista}`).classList.remove('hidden');
+            document.getElementById(`tab-${vista}`).classList.add('active');
+
+            if(vista === 'control') cargarTablaControl();
+            if(vista === 'cuentas') cargarTablasCuentas();
+        }
+
+        function calcularTotal() {
+            let total = 0;
+            const filas = document.querySelectorAll('#tabla-partidas tr');
+            
+            filas.forEach(fila => {
+                const cantInp = fila.querySelector('.partida-cant');
+                const unitInp = fila.querySelector('.partida-unit');
+                const impInp = fila.querySelector('.partida-imp-fila');
+
+                if(cantInp && unitInp && impInp) {
+                    let cant = parseFloat(cantInp.value) || 0;
+                    let unit = parseFloat(unitInp.value) || 0;
+                    let subtotal = cant * unit;
+                    total += subtotal;
+                    
+                    impInp.value = subtotal > 0 ? "$ " + subtotal.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "$ -";
+                }
+            });
+
+            document.getElementById('lbl-total').innerText = "$ " + total.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('lbl-monto-letras').innerText = numeroALetras(total);
+        }
+
+        // --- CONVERTIDOR DE NUMEROS A LETRAS EN ESPAÑOL ---
+        function Unidades(num) {
+            switch(num) {
+                case 1: return "UN";
+                case 2: return "DOS";
+                case 3: return "TRES";
+                case 4: return "CUATRO";
+                case 5: return "CINCO";
+                case 6: return "SEIS";
+                case 7: return "SIETE";
+                case 8: return "OCHO";
+                case 9: return "NUEVE";
+            }
+            return "";
+        }
+
+        function Decenas(num) {
+            let decena = Math.floor(num / 10);
+            let unidad = num - (decena * 10);
+            switch(decena) {
+                case 1:
+                    switch(unidad) {
+                        case 0: return "DIEZ";
+                        case 1: return "ONCE";
+                        case 2: return "DOCE";
+                        case 3: return "TRECE";
+                        case 4: return "CATORCE";
+                        case 5: return "QUINCE";
+                        default: return "DIECI" + Unidades(unidad);
+                    }
+                case 2:
+                    switch(unidad) {
+                        case 0: return "VEINTE";
+                        default: return "VEINTI" + Unidades(unidad);
+                    }
+                case 3: return DecenasY("TREINTA", unidad);
+                case 4: return DecenasY("CUARENTA", unidad);
+                case 5: return DecenasY("CINCUENTA", unidad);
+                case 6: return DecenasY("SESENTA", unidad);
+                case 7: return DecenasY("SETENTA", unidad);
+                case 8: return DecenasY("OCHENTA", unidad);
+                case 9: return DecenasY("NOVENTA", unidad);
+                case 0: return Unidades(unidad);
+            }
+        }
+
+        function DecenasY(strSin, numUnidad) {
+            if (numUnidad > 0) return strSin + " Y " + Unidades(numUnidad);
+            return strSin;
+        }
+
+        function Centenas(num) {
+            let centenas = Math.floor(num / 100);
+            let decenas = num - (centenas * 100);
+            switch(centenas) {
+                case 1:
+                    if (decenas > 0) return "CIENTO " + Decenas(decenas);
+                    return "CIEN";
+                case 2: return "DOSCIENTOS " + Decenas(decenas);
+                case 3: return "TRESCIENTOS " + Decenas(decenas);
+                case 4: return "CUATROCIENTOS " + Decenas(decenas);
+                case 5: return "QUINIENTOS " + Decenas(decenas);
+                case 6: return "SEISCIENTOS " + Decenas(decenas);
+                case 7: return "SETECIENTOS " + Decenas(decenas);
+                case 8: return "OCHOCIENTOS " + Decenas(decenas);
+                case 9: return "NOVECIENTOS " + Decenas(decenas);
+            }
+            return Decenas(decenas);
+        }
+
+        function Secciones(num, divisor, strSingular, strPlural) {
+            let cientos = Math.floor(num / divisor);
+            let resto = num - (cientos * divisor);
+            let letras = "";
+            if (cientos > 0) {
+                if (cientos > 1) {
+                    letras = Centenas(cientos) + " " + strPlural;
+                } else {
+                    letras = strSingular;
+                }
+            }
+            if (resto > 0) {
+                letras += " ";
+            }
+            return letras;
+        }
+
+        function Miles(num) {
+            let divisor = 1000;
+            let cientos = Math.floor(num / divisor);
+            let resto = num - (cientos * divisor);
+            let strMiles = Secciones(num, divisor, "UN MIL", "MIL");
+            let strCentenas = Centenas(resto);
+            if(strMiles == "") return strCentenas;
+            return strMiles + " " + strCentenas;
+        }
+
+        function Millones(num) {
+            let divisor = 1000000;
+            let cientos = Math.floor(num / divisor);
+            let resto = num - (cientos * divisor);
+            let strMillones = Secciones(num, divisor, "UN MILLON DE", "MILLONES DE");
+            let strMiles = Miles(resto);
+            if(strMillones == "") return strMiles;
+            return strMillones + " " + strMiles;
+        }
+
+        function numeroALetras(num) {
+            if(num === 0) return "Cero pesos 00/100 M.N.";
+            
+            let enteros = Math.floor(num);
+            let centavos = Math.round((num - enteros) * 100);
+            let centavosStr = String(centavos).padStart(2, '0') + "/100 M.N.";
+            
+            let textoEnteros = Millones(enteros).trim();
+            textoEnteros = textoEnteros.charAt(0).toUpperCase() + textoEnteros.slice(1).toLowerCase();
+            
+            return textoEnteros + " pesos " + centavosStr;
+        }
+
+        function eliminarTildesYMayusculas(texto) {
+            if(!texto) return "";
+            return texto.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/&/g, "");
+        }
+
+        function limpiarFormulario() {
+            if(confirm("¿Estás por borrar los datos capturados?")) {
+                const sesion = JSON.parse(localStorage.getItem('pibe_sesion_activa')) || {};
+                document.getElementById('nombre-solic').value = sesion.nombre || "";
+                document.getElementById('area-solic').value = sesion.area || "";
+                document.getElementById('select-motivo').value = "";
+                document.getElementById('clave-catalogo').value = "";
+                document.getElementById('select-beneficiario').value = "";
+                document.getElementById('banco').value = "";
+                document.getElementById('cuenta').value = "";
+                document.getElementById('clabe').value = "ND";
+                document.getElementById('num-tarjeta').value = "";
+                document.getElementById('select-forma-pago').value = "TRANSFERENCIA ELECTRONICA DE FONDOS";
+                document.getElementById('select-tipo-gasto').value = "OPERATIVO";
+                document.getElementById('select-ff').value = "MEXICO";
+                document.getElementById('select-proyecto').value = "ATT";
+                actualizarProyectoDinamico();
+                actualizarUbicacionesPorFF();
+                actualizarFormaPagoDinamica();
+                document.getElementById('val-fila-dinamica').value = "";
+                document.querySelectorAll('.partida-cant').forEach(i => i.value = "0");
+                document.querySelectorAll('.partida-desc').forEach(i => i.value = "");
+                document.querySelectorAll('.partida-unit').forEach(i => i.value = "0.00");
+                document.getElementById('observaciones').value = "";
+                calcularTotal();
+                generarFolioAutomatico();
+            }
+        }
+
+        function SubImprimirSolicitudYGenerarControl() {
+            const solicitante = document.getElementById('nombre-solic').value;
+            const area = document.getElementById('area-solic').value;
+            const concepto = document.getElementById('select-motivo').value;
+            const beneficiario = document.getElementById('select-beneficiario').value || document.getElementById('banco').value;
+            const formaPago = document.getElementById('select-forma-pago').value;
+            const tipoGasto = document.getElementById('select-tipo-gasto').value;
+            
+            let total = 0;
+            document.querySelectorAll('.partida-imp-fila').forEach(i => {
+                let val = parseFloat(i.value.replace(/[^0-9.-]+/g,"")) || 0;
+                total += val;
+            });
+
+            if(!solicitante) { alert("Debes iniciar sesión con un usuario válido"); return; }
+            if(!concepto) { alert("Debes especificar un CONCEPTO DEL PAGO"); return; }
+            if(total < 1) { alert("El importe total no puede ser menor a 1"); return; }
+
+            generarFolioAutomatico();
+            const nroControl = document.getElementById('no-control').value;
+            const fechaVal = document.getElementById('fecha-sol').value;
+
+            const proyectoSel = document.getElementById('select-proyecto').value;
+            const ubicacionFinal = (proyectoSel === "MERCADO_LIBRE" || proyectoSel === "TELCELC") ? "N/A" : document.getElementById('select-plaza').value;
+
+            const nuevoRegistro = {
+                fechaSolicitud: fechaVal,
+                noControlDireccion: nroControl,
+                statusComprobacion: "",
+                fechaComprobacion: "",
+                diasAtrasoComprobacion: "",
+                solicitante: eliminarTildesYMayusculas(solicitante),
+                area: eliminarTildesYMayusculas(area),
+                destinatario: eliminarTildesYMayusculas(beneficiario),
+                total: total.toFixed(2),
+                formaPago: formaPago,
+                tipoGasto: tipoGasto,
+                conceptoPago: concepto,
+                ubicacion: ubicacionFinal
+            };
+
+            let registros = JSON.parse(localStorage.getItem('pibe_control_solicitudes')) || [];
+            registros.push(nuevoRegistro);
+            localStorage.setItem('pibe_control_solicitudes', JSON.stringify(registros));
+
+            enviarAGoogleFormsWeb(nuevoRegistro, fechaVal);
+
+            alert("La solicitud fue guardada exitosamente con el número de control: " + nroControl + "\nSe procederá a abrir la ventana de impresión.");
+            window.print();
+            cargarTablaControl();
+        }
+
+        function enviarAGoogleFormsWeb(reg, fechaVal) {
+            const url = "https://docs.google.com/forms/d/e/1FAIpQLSdQWWiP5Ssp3J0mje1zFa22rgWznaG_BeGt7MrOemfHAtulZA/formResponse";
+            const partes = fechaVal.split('-');
+            
+            const params = new URLSearchParams();
+            params.append("entry.937308387_year", partes[0] || "");
+            params.append("entry.937308387_month", partes[1] || "");
+            params.append("entry.937308387_day", partes[2] || "");
+            params.append("entry.1272082999", reg.noControlDireccion);
+            params.append("entry.985024308", reg.solicitante);
+            params.append("entry.59526422", reg.area);
+            params.append("entry.1841872582", reg.destinatario);
+            params.append("entry.721185473", reg.total);
+            params.append("entry.963349711", reg.formaPago);
+            params.append("entry.628712510", reg.tipoGasto);
+            params.append("entry.193868383", reg.conceptoPago);
+            params.append("entry.624716139", reg.ubicacion);
+
+            fetch(url, {
+                method: "POST",
+                mode: "no-cors",
+                body: params
+            }).catch(err => {
+                console.error("Error al enviar a Google Forms:", err);
+            });
+        }
+
+        function cargarTablaControl() {
+            let registros = JSON.parse(localStorage.getItem('pibe_control_solicitudes')) || [];
+            const tbody = document.getElementById('tabla-control-body');
+            tbody.innerHTML = "";
+
+            const sesionGuardada = localStorage.getItem('pibe_sesion_activa');
+            if(!sesionGuardada) {
+                tbody.innerHTML = `<tr><td colspan="13" class="text-center py-4 text-gray-500">Inicia sesión para ver tus solicitudes.</td></tr>`;
+                return;
+            }
+
+            let usuarioActivoObj = JSON.parse(sesionGuardada);
+            let nombreUsuarioActivo = eliminarTildesYMayusculas(usuarioActivoObj.nombre);
+            let areaUsuarioActivo = eliminarTildesYMayusculas(usuarioActivoObj.area);
+
+            let misRegistros = registros.filter(r => r.solicitante === nombreUsuarioActivo && r.area === areaUsuarioActivo);
+
+            if(misRegistros.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="13" class="text-center py-4 text-gray-500">No tienes solicitudes registradas en este usuario.</td></tr>`;
+                return;
+            }
+
+            misRegistros.reverse().forEach(r => {
+                tbody.innerHTML += `<tr>
+                    <td class="px-3 py-2 border">${r.fechaSolicitud}</td>
+                    <td class="px-3 py-2 border font-bold bg-gray-50">${r.noControlDireccion}</td>
+                    <td class="px-3 py-2 border">${r.statusComprobacion || ''}</td>
+                    <td class="px-3 py-2 border">${r.fechaComprobacion || ''}</td>
+                    <td class="px-3 py-2 border">${r.diasAtrasoComprobacion || ''}</td>
+                    <td class="px-3 py-2 border">${r.solicitante}</td>
+                    <td class="px-3 py-2 border">${r.area}</td>
+                    <td class="px-3 py-2 border font-bold">${r.destinatario}</td>
+                    <td class="px-3 py-2 border text-right font-bold">$${Number(r.total).toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
+                    <td class="px-3 py-2 border">${r.formaPago}</td>
+                    <td class="px-3 py-2 border">${r.tipoGasto}</td>
+                    <td class="px-3 py-2 border">${r.conceptoPago}</td>
+                    <td class="px-3 py-2 border">${r.ubicacion}</td>
+                </tr>`;
+            });
+        }
+
+        function exportarExcelSimulado() {
+            let registros = JSON.parse(localStorage.getItem('pibe_control_solicitudes')) || [];
+            const sesionGuardada = localStorage.getItem('pibe_sesion_activa');
+            if(!sesionGuardada) { alert("Inicia sesión para exportar."); return; }
+            
+            let usuarioActivoObj = JSON.parse(sesionGuardada);
+            let nombreUsuarioActivo = eliminarTildesYMayusculas(usuarioActivoObj.nombre);
+            let areaUsuarioActivo = eliminarTildesYMayusculas(usuarioActivoObj.area);
+
+            let misRegistros = registros.filter(r => r.solicitante === nombreUsuarioActivo && r.area === areaUsuarioActivo);
+
+            if(misRegistros.length === 0) { alert("No hay datos tuyos para exportar."); return; }
+            let csvContent = "data:text/csv;charset=utf-8,FECHA DE SOLICITUD,NO. DE CONTROL DIRECCION,STATUS COMPROBACIÓN,FECHA DE COMPROBACIÓN,DIAS ATRASO COMPROBACIÓN,SOLICITANTE,ÁREA,DESTINATARIO,TOTAL,FORMA DE PAGO,TIPO DE GASTO,CONCEPTO DEL PAGO,UBICACIÓN\n";
+            misRegistros.forEach(r => {
+                csvContent += `"${r.fechaSolicitud}","${r.noControlDireccion}","${r.statusComprobacion}","${r.fechaComprobacion}","${r.djsAtrasoComprobacion || r.diasAtrasoComprobacion}","${r.solicitante}","${r.area}","${r.destinatario}","${r.total}","${r.formaPago}","${r.tipoGasto}","${r.conceptoPago}","${r.ubicacion}"\n`;
+            });
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", "MIS_SOLICITUDES_" + usuarioActivoObj.prefijoControl + ".csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
