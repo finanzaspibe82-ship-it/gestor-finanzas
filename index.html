@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solicitud de Autorización a Pago - PIBE LOGISTIC</title>
+    <title>Solicitud de Autorización a Pago - PIBE LOGISTIC[cite: 1]</title>
     <!-- FAVICON (ÍCONO DE PESTAÑA) -->
     <link rel="icon" type="image/png" href="image/FINANZAS.jpg">
     
@@ -21,8 +21,8 @@
         }
         .excel-table th, .excel-table td {
             border: 1px solid #000;
-            padding: 4px 8px;
-            font-size: 11px;
+            padding: 3px 6px;
+            font-size: 10.5px;
         }
         .excel-header {
             background-color: #1e5631;
@@ -36,7 +36,7 @@
             background: transparent;
             outline: none;
             font-family: inherit;
-            font-size: 11px;
+            font-size: 10.5px;
         }
         .input-excel:focus {
             background-color: #eff6ff;
@@ -74,9 +74,35 @@
             border-bottom: 3px solid #15803d;
         }
         @media print {
-            body { background: white; }
+            @page {
+                size: letter;
+                margin: 8mm;
+            }
+            body { 
+                background: white; 
+                padding: 0 !important;
+                margin: 0 !important;
+            }
             .no-print { display: none !important; }
-            .print-container { box-shadow: none !important; margin: 0 !important; width: 100% !important; border: none !important; }
+            .print-container { 
+                box-shadow: none !important; 
+                margin: 0 !important; 
+                width: 100% !important; 
+                border: 2px solid #000 !important; 
+                padding: 10px !important;
+            }
+            .excel-table th, .excel-table td {
+                padding: 2px 4px !important;
+                font-size: 10px !important;
+            }
+            .input-excel {
+                font-size: 10px !important;
+            }
+            .mb-3 { margin-bottom: 6px !important; }
+            .mb-4 { margin-bottom: 8px !important; }
+            .mb-8 { margin-bottom: 12px !important; }
+            .pt-6 { padding-top: 10px !important; }
+            .mt-8 { margin-top: 10px !important; }
         }
     </style>
 </head>
@@ -169,7 +195,7 @@
                 </tr>
             </table>
 
-            <!-- Tabla Derecha: No. de Control y Forma de Pago dinámica -->
+            <!-- Tabla Derecha: No. de Control y Forma de Pago -->
             <table class="excel-table h-full">
                 <tr>
                     <td class="excel-header w-2/5">NO. DE CONTROL DIRECCION</td>
@@ -210,6 +236,16 @@
                         <td class="w-3/5">
                             <select id="select-beneficiario" class="input-excel uppercase font-bold text-blue-900" onchange="cargarDatosBancariosBeneficiario()">
                                 <option value="">-- SELECCIONE DESTINATARIO --</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <!-- OPCIÓN DINÁMICA DE TAG (TELEVIA / VIAPASS) DENTRO DE DATOS DE BENEFICIARIO -->
+                    <tr id="fila-tag-proveedor" style="display: none;">
+                        <td class="font-bold bg-gray-100">PROVEEDOR TAG</td>
+                        <td>
+                            <select id="select-tag-proveedor" class="input-excel uppercase font-bold text-blue-900 cursor-pointer">
+                                <option value="TELEVIA">TELEVIA</option>
+                                <option value="VIAPASS">VIAPASS</option>
                             </select>
                         </td>
                     </tr>
@@ -534,6 +570,7 @@
                         <th class="px-3 py-2 border">TIPO DE GASTO</th>
                         <th class="px-3 py-2 border">CONCEPTO DEL PAGO</th>
                         <th class="px-3 py-2 border">UBICACIÓN</th>
+                        <th class="px-3 py-2 border text-center">ACCIÓN</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-control-body" class="bg-white divide-y divide-gray-200"></tbody>
@@ -800,6 +837,7 @@
             const filaClabe = document.getElementById('fila-clabe');
             const filaCuenta = document.getElementById('fila-cuenta');
             const filaNumTarjeta = document.getElementById('fila-num-tarjeta');
+            const filaTagProveedor = document.getElementById('fila-tag-proveedor');
 
             if (formaPago === "TRANSFERENCIA ELECTRONICA DE FONDOS") {
                 filaBanco.style.display = "";
@@ -811,6 +849,12 @@
                 filaClabe.style.display = "none";
                 filaCuenta.style.display = "none";
                 filaNumTarjeta.style.display = "none";
+            }
+
+            if (formaPago.includes("TAG")) {
+                filaTagProveedor.style.display = "";
+            } else {
+                filaTagProveedor.style.display = "none";
             }
 
             if (formaPago.includes("TARJETA")) {
@@ -929,7 +973,6 @@
             if(!nombreCompleto) { alert("Captura al menos el Nombre del beneficiario."); return; }
             if(!banco) { alert("Selecciona un Banco Receptor del catálogo."); return; }
 
-            // RESTRICCIÓN ESPECIAL PARA BANCO AZTECA: OBLIGATORIO LLENAR LOS TRES CAMPOS CORRECTAMENTE
             if (banco === "AZTECA") {
                 if (!clabe || clabe.length !== 18 || !tarjeta || tarjeta.length !== 16 || !cuenta || cuenta.length <= 2) {
                     alert("Error: Para el banco AZTECA es obligatorio llenar los tres campos (CLABE de 18 dígitos, No. de Tarjeta de 16 dígitos y No. de Cuenta válido).");
@@ -937,7 +980,6 @@
                 }
             }
 
-            // VALIDACIONES GENERALES DE DÍGITOS
             if(clabe !== "") {
                 if(clabe.length !== 18) {
                     alert("Error: La CLABE Interbancaria debe contener exactamente 18 dígitos.");
@@ -1291,6 +1333,20 @@
             const beneficiario = document.getElementById('select-beneficiario').value || document.getElementById('banco').value;
             const formaPago = document.getElementById('select-forma-pago').value;
             const tipoGasto = document.getElementById('select-tipo-gasto').value;
+            const valorDinamico = document.getElementById('val-fila-dinamica').value;
+            const proveedorTag = document.getElementById('select-tag-proveedor') ? document.getElementById('select-tag-proveedor').value : "";
+            const observaciones = document.getElementById('observaciones').value;
+
+            // Recolectar partidas detalladas
+            let partidasDetalle = [];
+            document.querySelectorAll('#tabla-partidas tr').forEach(fila => {
+                let cant = fila.querySelector('.partida-cant').value;
+                let desc = fila.querySelector('.partida-desc').value;
+                let unit = fila.querySelector('.partida-unit').value;
+                if(parseFloat(cant) > 0 || desc.trim() !== "") {
+                    partidasDetalle.push({ cant, desc, unit });
+                }
+            });
             
             let total = 0;
             document.querySelectorAll('.partida-imp-fila').forEach(i => {
@@ -1322,7 +1378,18 @@
                 formaPago: formaPago,
                 tipoGasto: tipoGasto,
                 conceptoPago: concepto,
-                ubicacion: ubicacionFinal
+                ubicacion: ubicacionFinal,
+                valorDinamico: valorDinamico,
+                proveedorTag: proveedorTag,
+                partidas: partidasDetalle,
+                observaciones: observaciones,
+                proyecto: proyectoSel,
+                ff: document.getElementById('select-ff').value,
+                bancoReceptor: document.getElementById('banco').value,
+                clabe: document.getElementById('clabe').value,
+                cuenta: document.getElementById('cuenta').value,
+                numTarjeta: document.getElementById('num-tarjeta').value,
+                claveCatalogo: document.getElementById('clave-catalogo').value
             };
 
             let registros = JSON.parse(localStorage.getItem('pibe_control_solicitudes')) || [];
@@ -1334,6 +1401,75 @@
             alert("La solicitud fue guardada exitosamente con el número de control: " + nroControl + "\nSe procederá a abrir la ventana de impresión.");
             window.print();
             cargarTablaControl();
+        }
+
+        // FUNCIÓN PARA CARGAR Y RE-IMPRIMIR UN REGISTRO GUARDADO DESDE EL CONTROL DE SOLICITUDES
+        function reimprimirSolicitud(noControl) {
+            let registros = JSON.parse(localStorage.getItem('pibe_control_solicitudes')) || [];
+            let reg = registros.find(r => r.noControlDireccion === noControl);
+            if(!reg) {
+                alert("No se encontró el registro.");
+                return;
+            }
+
+            // Volcar los datos guardados al formulario del generador
+            document.getElementById('fecha-sol').value = reg.fechaSolicitud || "";
+            document.getElementById('no-control').value = reg.noControlDireccion || "";
+            document.getElementById('nombre-solic').value = reg.solicitante || "";
+            document.getElementById('area-solic').value = reg.area || "";
+            document.getElementById('select-forma-pago').value = reg.formaPago || "TRANSFERENCIA ELECTRONICA DE FONDOS";
+            
+            actualizarFormaPagoDinamica();
+            
+            if(reg.valorDinamico && document.getElementById('val-fila-dinamica')) {
+                document.getElementById('val-fila-dinamica').value = reg.valorDinamico;
+            }
+            if(reg.proveedorTag && document.getElementById('select-tag-proveedor')) {
+                document.getElementById('select-tag-proveedor').value = reg.proveedorTag;
+            }
+
+            document.getElementById('select-beneficiario').value = reg.destinatario || "";
+            document.getElementById('banco').value = reg.bancoReceptor || "";
+            document.getElementById('clabe').value = reg.clabe || "ND";
+            document.getElementById('cuenta').value = reg.cuenta || "";
+            document.getElementById('num-tarjeta').value = reg.numTarjeta || "";
+
+            document.getElementById('select-tipo-gasto').value = reg.tipoGasto || "OPERATIVO";
+            document.getElementById('select-motivo').value = reg.conceptoPago || "";
+            document.getElementById('clave-catalogo').value = reg.claveCatalogo || "";
+            document.getElementById('select-ff').value = reg.ff || "MEXICO";
+            actualizarUbicacionesPorFF();
+            document.getElementById('select-plaza').value = reg.ubicacion || "";
+            document.getElementById('select-proyecto').value = reg.proyecto || "ATT";
+            actualizarProyectoDinamico();
+
+            // Rellenar partidas
+            const filasPartidas = document.querySelectorAll('#tabla-partidas tr');
+            filasPartidas.forEach((fila, idx) => {
+                let cantInp = fila.querySelector('.partida-cant');
+                let descInp = fila.querySelector('.partida-desc');
+                let unitInp = fila.querySelector('.partida-unit');
+                
+                if(reg.partidas && reg.partidas[idx]) {
+                    cantInp.value = reg.partidas[idx].cant;
+                    descInp.value = reg.partidas[idx].desc;
+                    unitInp.value = reg.partidas[idx].unit;
+                } else {
+                    cantInp.value = "0";
+                    descInp.value = "";
+                    unitInp.value = "0.00";
+                }
+            });
+
+            document.getElementById('observaciones').value = reg.observaciones || "";
+            calcularTotal();
+            document.getElementById('firma-comprueba-txt').innerText = reg.solicitante;
+
+            // Cambiar a la vista del generador e imprimir
+            cambiarVista('generador');
+            setTimeout(() => {
+                window.print();
+            }, 300);
         }
 
         function enviarAGoogleFormsWeb(reg, fechaVal) {
@@ -1370,7 +1506,7 @@
 
             const sesionGuardada = localStorage.getItem('pibe_sesion_activa');
             if(!sesionGuardada) {
-                tbody.innerHTML = `<tr><td colspan="13" class="text-center py-4 text-gray-500">Inicia sesión para ver tus solicitudes.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-gray-500">Inicia sesión para ver tus solicitudes.</td></tr>`;
                 return;
             }
 
@@ -1381,7 +1517,7 @@
             let misRegistros = registros.filter(r => r.solicitante === nombreUsuarioActivo && r.area === areaUsuarioActivo);
 
             if(misRegistros.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="13" class="text-center py-4 text-gray-500">No tienes solicitudes registradas en este usuario.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-gray-500">No tienes solicitudes registradas en este usuario.</td></tr>`;
                 return;
             }
 
@@ -1400,6 +1536,9 @@
                     <td class="px-3 py-2 border">${r.tipoGasto}</td>
                     <td class="px-3 py-2 border">${r.conceptoPago}</td>
                     <td class="px-3 py-2 border">${r.ubicacion}</td>
+                    <td class="px-3 py-2 border text-center">
+                        <button onclick="reimprimirSolicitud('${r.noControlDireccion}')" class="px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white font-bold text-[10px] rounded shadow">Imprimir</button>
+                    </td>
                 </tr>`;
             });
         }
