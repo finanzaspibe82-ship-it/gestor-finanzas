@@ -73,37 +73,66 @@
             color: #14532d;
             border-bottom: 3px solid #15803d;
         }
-        @media print {
-            @page {
-                size: letter;
-                margin: 8mm;
-            }
-            body { 
-                background: white; 
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            .no-print { display: none !important; }
-            .print-container { 
-                box-shadow: none !important; 
-                margin: 0 !important; 
-                width: 100% !important; 
-                border: 2px solid #000 !important; 
-                padding: 10px !important;
-            }
-            .excel-table th, .excel-table td {
-                padding: 2px 4px !important;
-                font-size: 10px !important;
-            }
-            .input-excel {
-                font-size: 10px !important;
-            }
-            .mb-3 { margin-bottom: 6px !important; }
-            .mb-4 { margin-bottom: 8px !important; }
-            .mb-8 { margin-bottom: 12px !important; }
-            .pt-6 { padding-top: 10px !important; }
-            .mt-8 { margin-top: 10px !important; }
-        }
+    @media print {
+    @page {
+        size: letter;
+        margin: 0mm;
+    }
+    
+    body > *:not(#modal-detalle-solicitud) {
+        display: none !important;
+    }
+    
+    #modal-detalle-solicitud {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: white !important;
+        display: block !important;
+        z-index: 99999 !important;
+    }
+
+    #modal-detalle-solicitud .flex.justify-between.items-center.px-6.py-3 {
+        display: none !important;
+    }
+
+    #contenido-detalle-modal {
+        display: block !important;
+        visibility: visible !important;
+        background: white !important;
+        padding: 4mm !important;
+        margin: 0 !important;
+        overflow: visible !important;
+        max-height: none !important;
+    }
+
+    #contenido-detalle-modal * {
+        visibility: visible !important;
+    }
+
+    #contenido-detalle-modal > div {
+        border: 1px solid #333 !important;
+        padding: 5px !important;
+        font-size: 9.5px !important;
+    }
+
+    #contenido-detalle-modal table td.desc-col {
+        width: 58% !important;
+        word-break: break-word !important;
+        white-space: normal !important;
+    }
+
+    #contenido-detalle-modal table th, 
+    #contenido-detalle-modal table td {
+        padding: 3px 5px !important;
+        font-size: 9.5px !important;
+        border: 1px solid #666 !important;
+    }
+    
+    .no-print { display: none !important; }
+}
     </style>
 </head>
 <body class="p-4">
@@ -578,6 +607,26 @@
         </div>
     </div>
 
+<!-- VENTANA MODAL PARA VER DETALLE DE SOLICITUD -->
+<div id="modal-detalle-solicitud" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center hidden no-print">
+    <div class="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col border-2 border-emerald-800">
+        <!-- BARRA SUPERIOR FIJA CON TÍTULO Y BOTONES -->
+        <div class="flex justify-between items-center px-6 py-3 bg-gray-100 border-b border-gray-300 rounded-t-lg">
+            <h3 class="text-sm font-bold text-gray-800 uppercase">VISTA DE SOLICITUD</h3>
+            <div class="flex gap-2">
+                <button onclick="imprimirDesdeModal()" class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded shadow">Imprimir</button>
+                <button onclick="cerrarModalDetalle()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-bold text-xs rounded shadow">Volver</button>
+            </div>
+        </div>
+
+        <!-- CONTENIDO CON SCROLL -->
+        <div id="contenido-detalle-modal" class="p-6 overflow-y-auto flex-1 bg-gray-50">
+            <!-- Aquí se inyecta el formato completo -->
+        </div>
+    </div>
+</div>
+</div>
+
     <script>
         const USUARIOS_SISTEMA = [
             { nombre: "MARIA ISABEL LEIJA GUERRERO", area: "ADQUISICIONES", jefe: "TANIA ELIZABETH PINELO FLORES", password: "116", prefijoControl: "PLAD" },
@@ -676,16 +725,35 @@
         ];
 
         document.addEventListener("DOMContentLoaded", () => {
-            const hoy = new Date().toISOString().split('T')[0];
-            document.getElementById('fecha-sol').value = hoy;
-            poblarSelectBancos();
-            poblarLoginUsuarios();
-            actualizarUbicacionesPorFF();
-            verificarSesionActiva();
-            actualizarFormaPagoDinamica();
-            actualizarProyectoDinamico();
-            calcularTotal();
-        });
+    // Generar la fecha de hoy en formato DD/MM/AAAA
+    const hoy = new Date();
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const anio = hoy.getFullYear();
+    
+    // Asignar fecha con formato mexicano al campo principal
+    document.getElementById('fecha-sol').value = `${dia}/${mes}/${anio}`;
+    
+    poblarSelectBancos();
+    poblarLoginUsuarios();
+    actualizarUbicacionesPorFF();
+    verificarSesionActiva();
+    actualizarFormaPagoDinamica();
+    actualizarProyectoDinamico();
+    calcularTotal();
+});
+
+		function formatearFechaLegible(fechaStr) {
+    if(!fechaStr) return "";
+    // Si viene en formato YYYY-MM-DD
+    if(fechaStr.includes('-')) {
+        let partes = fechaStr.split('-');
+        if(partes.length === 3) {
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+    }
+    return fechaStr;
+}
 
         function obtenerCuentasUsuarioActual() {
             const sesion = JSON.parse(localStorage.getItem('pibe_sesion_activa'));
@@ -927,36 +995,40 @@
         }
 
         function generarFolioAutomatico() {
-            const fechaVal = document.getElementById('fecha-sol').value;
-            if(!fechaVal) return;
-            const partes = fechaVal.split('-');
-            const anio = partes[0];
-            const mes = partes[1];
-            const dia = partes[2];
-            const ddmmyyyy = anio + mes + dia;
-            
-            const sesionGuardada = localStorage.getItem('pibe_sesion_activa');
-            let prefijoUser = "PL";
-            let areaUser = "GRAL";
-            if(sesionGuardada) {
-                let uObj = JSON.parse(sesionGuardada);
-                prefijoUser = uObj.prefijoControl || "PL";
-                areaUser = uObj.area || "GRAL";
-            }
+    const fechaVal = document.getElementById('fecha-sol').value;
+    if(!fechaVal) return;
+    
+    let ddmmyyyy = "";
+    if (fechaVal.includes('/')) {
+        const partes = fechaVal.split('/'); // DD/MM/AAAA
+        ddmmyyyy = partes[2] + partes[1] + partes[0]; // AAAAMMDD
+    } else if (fechaVal.includes('-')) {
+        const partes = fechaVal.split('-'); // AAAA-MM-DD
+        ddmmyyyy = partes[0] + partes[1] + partes[2]; // AAAAMMDD
+    }
+    
+    const sesionGuardada = localStorage.getItem('pibe_sesion_activa');
+    let prefijoUser = "PL";
+    let areaUser = "GRAL";
+    if(sesionGuardada) {
+        let uObj = JSON.parse(sesionGuardada);
+        prefijoUser = uObj.prefijoControl || "PL";
+        areaUser = uObj.area || "GRAL";
+    }
 
-            const prefijoBase = `${prefijoUser}${ddmmyyyy}`;
+    const prefijoBase = `${prefijoUser}${ddmmyyyy}`;
 
-            let registros = JSON.parse(localStorage.getItem('pibe_control_solicitudes')) || [];
-            let maxSec = 0;
-            registros.forEach(r => {
-                if(r.noControlDireccion && r.noControlDireccion.startsWith(prefijoBase) && r.area === areaUser) {
-                    let partesFolio = r.noControlDireccion.split('-');
-                    let seq = parseInt(partesFolio[partesFolio.length - 1]);
-                    if(!isNaN(seq) && seq > maxSec) maxSec = seq;
-                }
-            });
-            document.getElementById('no-control').value = `${prefijoBase}-${String(maxSec + 1).padStart(3, '0')}`;
+    let registros = JSON.parse(localStorage.getItem('pibe_control_solicitudes')) || [];
+    let maxSec = 0;
+    registros.forEach(r => {
+        if(r.noControlDireccion && r.noControlDireccion.startsWith(prefijoBase) && r.area === areaUser) {
+            let partesFolio = r.noControlDireccion.split('-');
+            let seq = parseInt(partesFolio[partesFolio.length - 1]);
+            if(!isNaN(seq) && seq > maxSec) maxSec = seq;
         }
+    });
+    document.getElementById('no-control').value = `${prefijoBase}-${String(maxSec + 1).padStart(3, '0')}`;
+}
 
         function guardarCuenta() {
             const nombres = document.getElementById('cta-nombres').value.trim();
@@ -1327,81 +1399,95 @@
         }
 
         function SubImprimirSolicitudYGenerarControl() {
-            const solicitante = document.getElementById('nombre-solic').value;
-            const area = document.getElementById('area-solic').value;
-            const concepto = document.getElementById('select-motivo').value;
-            const beneficiario = document.getElementById('select-beneficiario').value || document.getElementById('banco').value;
-            const formaPago = document.getElementById('select-forma-pago').value;
-            const tipoGasto = document.getElementById('select-tipo-gasto').value;
-            const valorDinamico = document.getElementById('val-fila-dinamica').value;
-            const proveedorTag = document.getElementById('select-tag-proveedor') ? document.getElementById('select-tag-proveedor').value : "";
-            const observaciones = document.getElementById('observaciones').value;
+    try {
+        const solicitante = document.getElementById('nombre-solic').value;
+        const area = document.getElementById('area-solic').value;
+        const concepto = document.getElementById('select-motivo').value;
+        const beneficiario = document.getElementById('select-beneficiario') ? document.getElementById('select-beneficiario').value : "";
+        const formaPago = document.getElementById('select-forma-pago').value;
+        const tipoGasto = document.getElementById('select-tipo-gasto').value;
+        const valorDinamico = document.getElementById('val-fila-dinamica') ? document.getElementById('val-fila-dinamica').value : "";
+        const observaciones = document.getElementById('observaciones').value;
 
-            // Recolectar partidas detalladas
-            let partidasDetalle = [];
-            document.querySelectorAll('#tabla-partidas tr').forEach(fila => {
-                let cant = fila.querySelector('.partida-cant').value;
-                let desc = fila.querySelector('.partida-desc').value;
-                let unit = fila.querySelector('.partida-unit').value;
+        let partidasDetalle = [];
+        document.querySelectorAll('#tabla-partidas tr').forEach(fila => {
+            let cantInput = fila.querySelector('.partida-cant');
+            let descInput = fila.querySelector('.partida-desc');
+            let unitInput = fila.querySelector('.partida-unit');
+            
+            if(cantInput && descInput && unitInput) {
+                let cant = cantInput.value;
+                let desc = descInput.value;
+                let unit = unitInput.value;
                 if(parseFloat(cant) > 0 || desc.trim() !== "") {
                     partidasDetalle.push({ cant, desc, unit });
                 }
-            });
-            
-            let total = 0;
-            document.querySelectorAll('.partida-imp-fila').forEach(i => {
-                let val = parseFloat(i.value.replace(/[^0-9.-]+/g,"")) || 0;
-                total += val;
-            });
+            }
+        });
+        
+        let total = 0;
+        document.querySelectorAll('.partida-imp-fila').forEach(i => {
+            let val = parseFloat(i.value.replace(/[^0-9.-]+/g,"")) || 0;
+            total += val;
+        });
 
-            if(!solicitante) { alert("Debes iniciar sesión con un usuario válido"); return; }
-            if(!concepto) { alert("Debes especificar un CONCEPTO DEL PAGO"); return; }
-            if(total < 1) { alert("El importe total no puede ser menor a 1"); return; }
+        if(!solicitante) { alert("Debes iniciar sesión con un usuario válido"); return; }
+        if(!concepto) { alert("Debes especificar un CONCEPTO DEL PAGO"); return; }
+        if(total < 1) { alert("El importe total no puede ser menor a 1"); return; }
 
-            generarFolioAutomatico();
-            const nroControl = document.getElementById('no-control').value;
-            const fechaVal = document.getElementById('fecha-sol').value;
+        generarFolioAutomatico();
+        const nroControl = document.getElementById('no-control').value;
+        const fechaVal = document.getElementById('fecha-sol').value;
 
-            const proyectoSel = document.getElementById('select-proyecto').value;
-            const ubicacionFinal = (proyectoSel === "MERCADO_LIBRE" || proyectoSel === "TELCELC") ? "N/A" : document.getElementById('select-plaza').value;
+        const proyectoSel = document.getElementById('select-proyecto') ? document.getElementById('select-proyecto').value : "";
+        const ubicacionFinal = (proyectoSel === "MERCADO_LIBRE" || proyectoSel === "TELCELC") ? "N/A" : (document.getElementById('select-plaza') ? document.getElementById('select-plaza').value : "");
 
-            const nuevoRegistro = {
-                fechaSolicitud: fechaVal,
-                noControlDireccion: nroControl,
-                statusComprobacion: "",
-                fechaComprobacion: "",
-                diasAtrasoComprobacion: "",
-                solicitante: eliminarTildesYMayusculas(solicitante),
-                area: eliminarTildesYMayusculas(area),
-                destinatario: eliminarTildesYMayusculas(beneficiario),
-                total: total.toFixed(2),
-                formaPago: formaPago,
-                tipoGasto: tipoGasto,
-                conceptoPago: concepto,
-                ubicacion: ubicacionFinal,
-                valorDinamico: valorDinamico,
-                proveedorTag: proveedorTag,
-                partidas: partidasDetalle,
-                observaciones: observaciones,
-                proyecto: proyectoSel,
-                ff: document.getElementById('select-ff').value,
-                bancoReceptor: document.getElementById('banco').value,
-                clabe: document.getElementById('clabe').value,
-                cuenta: document.getElementById('cuenta').value,
-                numTarjeta: document.getElementById('num-tarjeta').value,
-                claveCatalogo: document.getElementById('clave-catalogo').value
-            };
+        const nuevoRegistro = {
+            fechaSolicitud: fechaVal,
+            noControlDireccion: nroControl,
+            statusComprobacion: "",
+            fechaComprobacion: "",
+            diasAtrasoComprobacion: "",
+            solicitante: solicitante,
+            area: area,
+            destinatario: beneficiario || (document.getElementById('banco') ? document.getElementById('banco').value : ""),
+            total: total.toFixed(2),
+            formaPago: formaPago,
+            tipoGasto: tipoGasto,
+            conceptoPago: concepto,
+            ubicacion: ubicacionFinal,
+            valorDinamico: valorDinamico,
+            partidas: partidasDetalle,
+            observaciones: observaciones,
+            proyecto: proyectoSel,
+            ff: document.getElementById('select-ff') ? document.getElementById('select-ff').value : "",
+            bancoReceptor: document.getElementById('banco') ? document.getElementById('banco').value : "",
+            clabe: document.getElementById('clabe') ? document.getElementById('clabe').value : "",
+            cuenta: document.getElementById('cuenta') ? document.getElementById('cuenta').value : "",
+            numTarjeta: document.getElementById('num-tarjeta') ? document.getElementById('num-tarjeta').value : "",
+            claveCatalogo: document.getElementById('clave-catalogo') ? document.getElementById('clave-catalogo').value : "",
+            jefe: document.getElementById('firma-aut-jefe') ? document.getElementById('firma-aut-jefe').value : ""
+        };
 
-            let registros = JSON.parse(localStorage.getItem('pibe_control_solicitudes')) || [];
-            registros.push(nuevoRegistro);
-            localStorage.setItem('pibe_control_solicitudes', JSON.stringify(registros));
+        let registros = JSON.parse(localStorage.getItem('pibe_control_solicitudes')) || [];
+        registros.push(nuevoRegistro);
+        localStorage.setItem('pibe_control_solicitudes', JSON.stringify(registros));
 
+        if (typeof enviarAGoogleFormsWeb === "function") {
             enviarAGoogleFormsWeb(nuevoRegistro, fechaVal);
-
-            alert("La solicitud fue guardada exitosamente con el número de control: " + nroControl + "\nSe procederá a abrir la ventana de impresión.");
-            window.print();
-            cargarTablaControl();
         }
+
+        // Llama a la vista previa con las 11 filas y ejecuta la impresión limpia
+        verDetalleSolicitud(nroControl);
+        setTimeout(() => {
+            window.print();
+        }, 400);
+
+    } catch (error) {
+        console.error("Error al generar solicitud:", error);
+        alert("Ocurrió un detalle al procesar la solicitud.");
+    }
+}
 
         // FUNCIÓN PARA CARGAR Y RE-IMPRIMIR UN REGISTRO GUARDADO DESDE EL CONTROL DE SOLICITUDES
         function reimprimirSolicitud(noControl) {
@@ -1523,7 +1609,7 @@
 
             misRegistros.reverse().forEach(r => {
                 tbody.innerHTML += `<tr>
-                    <td class="px-3 py-2 border">${r.fechaSolicitud}</td>
+                    <td class="px-3 py-2 border">${formatearFechaLegible(r.fechaSolicitud)}</td>
                     <td class="px-3 py-2 border font-bold bg-gray-50">${r.noControlDireccion}</td>
                     <td class="px-3 py-2 border">${r.statusComprobacion || ''}</td>
                     <td class="px-3 py-2 border">${r.fechaComprobacion || ''}</td>
@@ -1537,7 +1623,7 @@
                     <td class="px-3 py-2 border">${r.conceptoPago}</td>
                     <td class="px-3 py-2 border">${r.ubicacion}</td>
                     <td class="px-3 py-2 border text-center">
-                        <button onclick="reimprimirSolicitud('${r.noControlDireccion}')" class="px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white font-bold text-[10px] rounded shadow">Imprimir</button>
+                        <button onclick="verDetalleSolicitud('${r.noControlDireccion}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] rounded shadow">Ver</button>
                     </td>
                 </tr>`;
             });
@@ -1566,6 +1652,259 @@
             link.click();
             document.body.removeChild(link);
         }
+		
+		let controlActualTemp = null;
+
+function verDetalleSolicitud(noControl) {
+    let registros = JSON.parse(localStorage.getItem('pibe_control_solicitudes')) || [];
+    let reg = registros.find(r => r.noControlDireccion === noControl);
+    if(!reg) {
+        alert("No se encontró el registro.");
+        return;
+    }
+
+    let contenedor = document.getElementById('contenido-detalle-modal');
+
+    let htmlPartidasFilas = '';
+    let totalCalculado = 0;
+    let partidasValidas = [];
+
+    if (reg.partidas && reg.partidas.length > 0) {
+        partidasValidas = reg.partidas.filter(p => (parseFloat(p.cant) > 0 || (p.desc && p.desc.trim() !== "")));
+    }
+
+    // Dibujar las partidas reales que existan
+    if (partidasValidas.length > 0) {
+        partidasValidas.forEach(p => {
+            let cant = parseFloat(p.cant) || 0;
+            let unit = parseFloat(p.unit) || 0;
+            let subtotal = cant * unit;
+            totalCalculado += subtotal;
+            let impStr = subtotal > 0 ? "$ " + subtotal.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "$ -";
+
+            htmlPartidasFilas += `
+                <tr>
+                    <td class="border border-gray-400 text-center p-1 font-normal w-[10%]">${cant}</td>
+                    <td class="border border-gray-400 uppercase p-1 font-normal desc-col w-[58%] text-left">${p.desc || ''}</td>
+                    <td class="border border-gray-400 text-right p-1 font-normal w-[16%]">${unit > 0 ? unit.toLocaleString('es-MX', {minimumFractionDigits: 2}) : '0.00'}</td>
+                    <td class="border border-gray-400 text-right p-1 font-normal w-[16%]">${impStr}</td>
+                </tr>`;
+        });
+    }
+
+    // Rellenar con filas vacías estéticas hasta completar las 11 filas exactas
+    let filasTotalesTabla = 11;
+    let filasActuales = partidasValidas.length > 0 ? partidasValidas.length : 0;
+
+    if (filasActuales === 0) {
+        htmlPartidasFilas += `
+            <tr>
+                <td class="border border-gray-400 text-center p-1 font-normal w-[10%]">1</td>
+                <td class="border border-gray-400 uppercase p-1 font-normal desc-col w-[58%] text-left text-gray-400">DETALLE DEL SERVICIO...</td>
+                <td class="border border-gray-400 text-right p-1 font-normal w-[16%]">0.00</td>
+                <td class="border border-gray-400 text-right p-1 font-normal w-[16%]">$ -</td>
+            </tr>`;
+        filasActuales = 1;
+    }
+
+    let filasFaltantes = filasTotalesTabla - filasActuales;
+    for (let i = 0; i < filasFaltantes; i++) {
+        htmlPartidasFilas += `
+            <tr>
+                <td class="border border-gray-400 text-center p-1 font-normal w-[10%]">0</td>
+                <td class="border border-gray-400 uppercase p-1 font-normal desc-col w-[58%]">&nbsp;</td>
+                <td class="border border-gray-400 text-right p-1 font-normal w-[16%]">0.00</td>
+                <td class="border border-gray-400 text-right p-1 font-normal w-[16%]">$ -</td>
+            </tr>`;
+    }
+
+    let montoLetrasTxt = typeof numeroALetras === "function" ? numeroALetras(parseFloat(reg.total) || totalCalculado) : "";
+
+    let fechaLegible = reg.fechaSolicitud || "";
+    if(fechaLegible && fechaLegible.includes('-')) {
+        let pFe = fechaLegible.split('-');
+        if(pFe.length === 3) fechaLegible = `${pFe[2]}/${pFe[1]}/${pFe[0]}`;
+    }
+
+    contenedor.innerHTML = `
+        <div class="bg-white p-4 border border-gray-600 font-mono text-[10px] shadow-sm max-w-3xl mx-auto">
+            <!-- ENCABEZADO OFICIAL -->
+            <div class="grid grid-cols-12 border border-gray-600 mb-2 items-center">
+                <div class="col-span-3 p-2 border-r border-gray-600 flex flex-col items-center justify-center bg-white">
+                    <img src="image/LOGO.jpg" alt="Logo PIBE LOGISTIC" class="w-16 h-14 object-contain">
+                </div>
+                <div class="col-span-9 text-center p-2">
+                    <div class="text-base font-black italic tracking-wide text-black uppercase">
+                        PIBE LOGISTIC S DE RL DE CV
+                    </div>
+                    <div class="text-[11px] font-bold italic mt-0.5 text-black">
+                        "SOLICITUD DE AUTORIZACION A PAGO"
+                    </div>
+                    <div class="text-[10px] font-bold italic text-black">
+                        DIRECCIÓN DE ADMINISTRACION Y FINANZAS
+                    </div>
+                </div>
+            </div>
+...
+
+            <!-- DATOS SUPERIORES -->
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <table class="excel-table h-full border border-gray-400 w-full">
+                    <tr>
+                        <td class="excel-header w-2/5 border border-gray-400 bg-gray-200 text-black font-bold p-1">FECHA DE SOLICITUD</td>
+                        <td class="w-3/5 text-center bg-white border border-gray-400 p-1 font-normal">${fechaLegible}</td>
+                    </tr>
+                    <tr>
+                        <td class="excel-header border border-gray-400 bg-gray-200 text-black font-bold p-1">SOLICITANTE</td>
+                        <td class="uppercase bg-white border border-gray-400 p-1 font-normal">${reg.solicitante || ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="excel-header border border-gray-400 bg-gray-200 text-black font-bold p-1">ÁREA</td>
+                        <td class="uppercase bg-white border border-gray-400 p-1 font-normal">${reg.area || ''}</td>
+                    </tr>
+                </table>
+
+                <table class="excel-table h-full border border-gray-400 w-full">
+                    <tr>
+                        <td class="excel-header w-2/5 border border-gray-400 bg-gray-200 text-black font-bold p-1">NO. DE CONTROL DIRECCION</td>
+                        <td class="w-3/5 text-center border border-gray-400 p-1 bg-white font-normal">${reg.noControlDireccion || ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="excel-header border border-gray-400 bg-gray-200 text-black font-bold p-1">FORMA DE PAGO</td>
+                        <td class="uppercase text-blue-900 border border-gray-400 p-1 bg-white font-normal">${reg.formaPago || ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="excel-header font-bold border border-gray-400 p-1 bg-gray-200 text-black">INFORMACIÓN</td>
+                        <td class="border border-gray-400 p-1 bg-white font-normal">${reg.valorDinamico || 'N/A'}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- BLOQUE CENTRAL: BENEFICIARIO Y CLASIFICACION -->
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <table class="excel-table h-full border border-gray-400 w-full">
+                    <tr>
+                        <td colspan="2" class="excel-header border border-gray-400 bg-gray-600 text-white font-extrabold text-center p-1">DATOS DE BENEFICIARIO</td>
+                    </tr>
+                    <tr>
+                        <td class="w-2/5 font-bold border border-gray-400 p-1 bg-gray-200">DESTINATARIO</td>
+                        <td class="w-3/5 uppercase text-blue-900 border border-gray-400 p-1 bg-white font-normal">${reg.destinatario || ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold border border-gray-400 p-1 bg-gray-200">BANCO RECEPTOR</td>
+                        <td class="uppercase border border-gray-400 p-1 bg-white font-normal">${reg.bancoReceptor || ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold border border-gray-400 p-1 bg-gray-200">CLABE INTERBANCARIA</td>
+                        <td class="border border-gray-400 p-1 bg-white font-normal">${reg.clabe || 'ND'}</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold border border-gray-400 p-1 bg-gray-200">CUENTA BANCARIA</td>
+                        <td class="border border-gray-400 p-1 bg-white font-normal">${reg.cuenta || ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold border border-gray-400 p-1 bg-gray-200">NUMERO DE TARJETA</td>
+                        <td class="border border-gray-400 p-1 bg-white font-normal">${reg.numTarjeta || ''}</td>
+                    </tr>
+                </table>
+
+                <table class="excel-table h-full border border-gray-400 w-full">
+                    <tr>
+                        <td colspan="2" class="excel-header border border-gray-400 bg-gray-600 text-white font-extrabold text-center p-1">CLASIFICACION</td>
+                    </tr>
+                    <tr>
+                        <td class="w-2/5 font-bold border border-gray-400 p-1 bg-gray-200">TIPO DE GASTO</td>
+                        <td class="w-3/5 uppercase text-blue-900 border border-gray-400 p-1 bg-white font-normal">${reg.tipoGasto || ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold border border-gray-400 p-1 bg-gray-200">CONCEPTO DEL PAGO</td>
+                        <td class="uppercase border border-gray-400 p-1 bg-white font-normal">${reg.conceptoPago || ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold border border-gray-400 p-1 bg-gray-200">CLAVE CATALOGO</td>
+                        <td class="border border-gray-400 p-1 bg-white font-normal">${reg.claveCatalogo || ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold border border-gray-400 p-1 bg-gray-200">FF</td>
+                        <td class="uppercase text-blue-900 border border-gray-400 p-1 bg-white font-normal">${reg.ff || ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold border border-gray-400 p-1 bg-gray-200">UBICACIÓN</td>
+                        <td class="uppercase border border-gray-400 p-1 bg-white font-normal">${reg.ubicacion || ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold border border-gray-400 p-1 bg-gray-200">PROYECTO ASIGNADO</td>
+                        <td class="uppercase border border-gray-400 p-1 bg-white font-normal">${reg.proyecto || ''}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- TABLA DE PARTIDAS -->
+            <table class="excel-table mb-2 border border-gray-400 w-full">
+                <thead>
+                    <tr class="excel-header bg-gray-200 text-black font-bold">
+                        <th class="border border-gray-400 p-1 w-[10%] text-center">CANTIDAD</th>
+                        <th class="border border-gray-400 p-1 w-[58%] text-left">DESCRIPCION DEL SERVICIO Y/O PRODUCTO</th>
+                        <th class="border border-gray-400 p-1 w-[16%] text-right">UNITARIO</th>
+                        <th class="border border-gray-400 p-1 w-[16%] text-right">IMPORTE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${htmlPartidasFilas}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="excel-header border border-gray-400 bg-gray-200 text-black text-right pr-4 font-bold text-xs p-1">TOTAL</td>
+                        <td class="text-right text-xs bg-white border border-gray-400 p-1 font-normal">$ ${Number(reg.total || 0).toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- MONTO EN LETRAS -->
+            <div class="mb-2 text-[10px]">
+                <span class="font-bold block mb-0.5">MONTO EN LETRAS:</span>
+                <div class="italic text-gray-900 border-b border-gray-400 py-0.5 bg-white font-normal">${montoLetrasTxt}</div>
+            </div>
+
+            <!-- OBSERVACIONES -->
+            <div class="mb-3 text-[10px]">
+                <div class="excel-header text-left px-2 py-0.5 mb-1 font-bold inline-block bg-gray-200 text-black border border-gray-400" style="font-size: 9px;">INFORMACION ADICIONAL</div>
+                <div class="border-b border-gray-400 w-full py-1 uppercase text-gray-900 bg-white font-normal">
+                    ${reg.observaciones || 'NINGUNA'}
+                </div>
+            </div>
+
+            <!-- FIRMAS -->
+            <div class="grid grid-cols-3 gap-4 text-center pt-2 text-[9px]">
+                <div class="flex flex-col items-center">
+                    <div class="border border-gray-400 w-full py-0.5 font-bold bg-gray-200 mb-6">COMPRUEBA</div>
+                    <div class="border-b border-gray-600 w-3/4 pb-0.5 uppercase font-normal">${reg.solicitante || ''}</div>
+                    <span class="text-[8.5px] mt-0.5 font-bold">NOMBRE Y FIRMA</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="border border-gray-400 w-full py-0.5 font-bold bg-gray-200 mb-6">AUTORIZACION JEFE DIRECTO</div>
+                    <div class="border-b border-gray-600 w-3/4 pb-0.5 uppercase font-normal">${reg.jefe || 'TANIA ELIZABETH PINELO FLORES'}</div>
+                    <span class="text-[8.5px] mt-0.5 font-bold">NOMBRE Y FIRMA</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="border border-gray-400 w-full py-0.5 font-bold bg-gray-200 mb-6">AUTORIZACION A PAGO (SOLO FINANZAS)</div>
+                    <div class="border-b border-gray-600 w-3/4 pb-0.5 uppercase font-normal">TANIA ELIZABETH PINELO FLORES</div>
+                    <span class="text-[8.5px] mt-0.5 font-bold">NOMBRE Y FIRMA</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('modal-detalle-solicitud').classList.remove('hidden');
+}
+
+function cerrarModalDetalle() {
+    document.getElementById('modal-detalle-solicitud').classList.add('hidden');
+}
+
+function imprimirDesdeModal() {
+    window.print();
+}
     </script>
 </body>
 </html>
